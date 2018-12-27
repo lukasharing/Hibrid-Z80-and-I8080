@@ -1,0 +1,116 @@
+From:
+http://fruttenboel.verhoeven272.nl/Gameboy/GBsummary.html
+
+Summary:
+
+-> CPU: 8 bit
+-> Speed (2 Modes): 4.2MHz (Normal) / 8.4MHz (Fast)
+-> Work RAM: 32 KB
+-> Video RAM: 16 KB
+-> Resolution: 160 x 144 px
+-> Colores 32768 = 2^15
+-> Memory Map:
+* [RO] 0x0000 to 0x3FFF (16 KB) ROM
+* [RO] 0x4000 to 0x7FFF (16 KB) ROM MBC1 (16 ROM banks)
+* [RW] 0x8000 to 0x9FFF (8 KB) Video RAM (CPU Switch)
+* [RW] 0xA000 to 0xBFFF (8 KB) External RAM (MBC and bankswitching)
+* [RW] 0xC000 to 0xCFFF (4 KB) Work RAM BANK 0
+* [RW] 0xD000 to 0xDFFF (4 KB) Work RAM BANK 1..7
+* [NU] 0xE000 to 0xFDFF (7 KB) Mirror
+* [RO] 0xFE00 to 0xFE9F (160 B) Sprite Attribute Table
+* [RW] 0xFEA0 to 0xFFFF (95 B) Don't use
+* [RW] 0xFF00 to 0xFF7F (128 B) I/O Ports
+* [RW] 0xFF80 to 0xFFFE (127 B) High RAM
+* [RW] 0xFFFF to 0xFFFF (1 B) Interrupt Enable Register
+-> CPU Register (8 bits each register)
+* Register: A -> Accumulator -> Combined with F -> Form AF
+* Register: F -> Status Flag -> Combined with A -> Form AF
+* Register: B -> (?) GP register -> Combined with C -> Form BC
+* Register: C -> Counter -> Combined with B -> Form BC
+* Register: D -> (?) GP register -> Combined with E -> Form DE
+* Register: E -> (?) GP register -> Combined with D -> Form DE
+* Register: H -> Pointer -> Combined with L -> Form HL
+* Register: L -> Pointer -> Combined with H -> Form HL
+* Register: SP -> Stack Pointer
+* Register: PC -> Instruction Pointer
+-> Register F Flags (8 bits).
+* Bits 0..3 always 0.
+* Bit 4, Flag N, BCD[1] related.
+* Bit 5, Flag H, Half Carry BCD.
+* Bit 6, Flag C, Carry Flag.
+* Bit 7, Flag Z, The operation resulted in a zero (1 Yes, 0 No).
+
+
+[1] BCD : Binary Coded Decimal: Class of binary encoding of decimal numbers.
+- https://en.wikipedia.org/wiki/Binary-coded_decimal
+
+From:
+./UM0080.pdf
+
+Summary:
+-> Address Bus 16 pins (2^16 memro size)
+-> Instruction Cycle (10 T Cycles):
+* 4 T Cycles Opcode Fetch.
+* 3 T Cycles Memory Read.
+* 3 T Cycles Memory Write.
+-> 158 Different Instruction Types + 78 of the 8080A. [p. 47]
+-> Addressing Modes:
+* Immediate Addressing.
+° 1 Byte + OpC ( Ex. Acc <- Cnt )
+* Immediate Extended Addressing.
+° 2 Bytes + OpC ( HL <- Cnt[16bits] )
+* Modified Page Zero Addressing.
+° CALL Instruction to any of 8 locations in Page 0, Sets PC an Effective Address.
+1Byte -> Especifies 2 Bytes (Because in page 0 Subroutines are located) (??).
+* Relative Addressing (SMALL DISPLACEMENT).
+° 1 Byte + OpC (A + DISPL) Where DISPL is a signed two's complement (-127 to 127) number added
+to the address of the op code, where A + 2.
+* Extended Addressing (BIG DISPLACEMENT).
+° 2 Bytes of address to be included in the instruction, providing long jumps along the whole Memory
+space.
+* Indexed Addressing.
+° The byte of data following the OpC contains a displacement that is added to one of the two
+registers (OpC contains the index of the register)
+* Register Addressing.
+° (RX <- RY)
+* Register Indirect Addressing.
+° 16 bit (pair, Ex HL Reg) as pointer
+-> Mnemonics OPCode + [0, 1, 2] Operands, instructions where the operand is implied,
+
+-> INSTRUCTIONS (Pg. 84)
+
+From:
+http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers
+http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header#0148_-_ROM_Size
+
+Summary:
+
+-> Games use MBCs to expand the available address space by bank switching (Inside Cartridge).
+-> MBC type is stored inside the Cartridge memory location 0x0147.
+-> List of Type/MBC Name:
+0x00  ROM ONLY                 19h  MBC5
+0x01  MBC1                     1Ah  MBC5+RAM
+0x02  MBC1+RAM                 1Bh  MBC5+RAM+BATTERY
+0x03  MBC1+RAM+BATTERY         1Ch  MBC5+RUMBLE
+0x05  MBC2                     1Dh  MBC5+RUMBLE+RAM
+0x06  MBC2+BATTERY             1Eh  MBC5+RUMBLE+RAM+BATTERY
+0x08  ROM+RAM                  20h  MBC6
+0x09  ROM+RAM+BATTERY          22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
+0x0B  MMM01
+0x0C  MMM01+RAM
+0x0D  MMM01+RAM+BATTERY
+0x0F  MBC3+TIMER+BATTERY
+0x10  MBC3+TIMER+RAM+BATTERY   FCh  POCKET CAMERA
+0x11  MBC3                     FDh  BANDAI TAMA5
+0x12  MBC3+RAM                 FEh  HuC3
+0x13  MBC3+RAM+BATTERY         FFh  HuC1+RAM+BATTERY
+-> Header CheckSum:
+* 8bit checksum from 0x0134 to 0x14C, the algorithm is:
+{
+  x=0:
+  FOR i = ßx0134 TO 0x014C:
+    x = x - MEM[i] - 1:
+  NEXT
+  IF x != MEM[0x014C]:
+    ERROR
+}
