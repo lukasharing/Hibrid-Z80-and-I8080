@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Example</title>
+    <script src="../Z80.js"></script>
+    <script src="./example.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  </head>
+  <body>
+    <div id="viewer">
+      <input type="file" id="file-loader" class="hide" />
+      <button id="load-memory">Load Memory...</button>
+      <div id="hex-viewer">
+        <div id="hex-header">
+          <div>Offset</div>
+          <div>Memory</div>
+          <div>Instruction</div>
+        </div>
+        <div id="container"></div>
+      </div>
+
+      <div class="multitab" id="registers">
+        <div class="tabs">
+          <div class="selected">Byte</div>
+          <div>Short</div>
+        </div>
+        <div class="tab_container">
+          <div class="table">
+            <div class="header">
+              <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>H</div><div>L</div>
+            </div>
+            <div class="body">
+              <div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+          </div>
+          <div class="table hide">
+            <div class="header">
+              <div>BC</div><div>DE</div><div>HL</div><div>AF</div>
+            </div>
+            <div class="body">
+              <div></div><div></div><div></div><div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
