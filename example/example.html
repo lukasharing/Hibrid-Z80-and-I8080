@@ -5,43 +5,64 @@
     <title>Example</title>
     <script src="../Z80.js"></script>
     <script src="./example.js"></script>
+    <link rel="stylesheet" href="./css/fontello.css" />
     <link rel="stylesheet" href="./style.css" />
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   </head>
   <body>
     <div id="viewer">
-      <input type="file" id="file-loader" class="hide" />
-      <button id="load-memory">Load Memory...</button>
-      <div id="hex-viewer">
-        <div id="hex-header">
-          <div>Offset</div>
-          <div>Memory</div>
-          <div>Instruction</div>
-        </div>
-        <div id="container"></div>
-      </div>
+      <div id="left-viewer">
+        <input type="file" id="file-loader" class="hide" />
+        <button id="load-memory">Load Memory...</button>
 
-      <div class="multitab" id="registers">
-        <div class="tabs">
-          <div class="selected">Byte</div>
-          <div>Short</div>
+        <div id="buttons">
+          <button id="step">Step</button>
+          <button class="icon-play" id="play">Play</button>
+          <input type="number" min="1" value="69833" id="number_skip" placeholder="Skip">
         </div>
-        <div class="tab_container">
-          <div class="table">
-            <div class="header">
-              <div>A</div><div>B</div><div>C</div><div>D</div><div>E</div><div>H</div><div>L</div>
+
+        <div id="hex-viewer">
+          <div id="hex-header">
+            <div>Offset</div>
+            <div>Memory</div>
+            <div>Instruction</div>
+          </div>
+          <div id="container"></div>
+        </div>
+
+        <div class="multitab" id="registers">
+          <div class="tabs">
+            <div class="selected">Byte</div>
+            <div>Short</div>
+          </div>
+          <div class="tab_container">
+            <div class="table">
+              <div class="header">
+                <div>B</div><div>C</div><div>D</div><div>E</div><div>H</div><div>L</div><div>A</div><div>F</div>
+              </div>
+              <div class="row">
+                <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+              </div>
             </div>
-            <div class="body">
-              <div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+            <div class="table hide">
+              <div class="header">
+                <div>BC</div><div>DE</div><div>HL</div><div>AF</div><div>PC</div><div>SP</div>
+              </div>
+              <div class="row">
+                <div></div><div></div><div></div><div></div><div></div><div></div>
+              </div>
             </div>
           </div>
-          <div class="table hide">
-            <div class="header">
-              <div>BC</div><div>DE</div><div>HL</div><div>AF</div>
-            </div>
-            <div class="body">
-              <div></div><div></div><div></div><div></div>
-            </div>
+        </div>
+      </div>
+      <div id="right-viewer">
+        <div class="table">
+          <div class="header" id="header-hex">
+            <div class="offset_table">Offset</div>
+            <div>0x0</div><div>0x1</div><div>0x2</div><div>0x3</div><div>0x4</div><div>0x5</div>
+            <div>0x6</div><div>0x7</div><div>0x8</div><div>0x9</div><div>0xA</div><div>0xB</div><div>0xC</div><div>0xD</div><div>0xE</div><div>0xF</div>
+          </div>
+          <div id="hex-values">
           </div>
         </div>
       </div>

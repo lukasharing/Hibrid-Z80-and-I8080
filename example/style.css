@@ -8,18 +8,35 @@ body{
   font-family: 'Roboto', sans-serif;
 }
 
-.hide{ display: none; }
+.hide{ display: none !important; }
 
 #viewer{
+  outline: 3px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid #d4d4d4;
   background: white;
-  width: 300px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  width: 800px;
+  display: flex;
+}
+
+#left-viewer{
+  width: 270px;
+  border-right: 1px solid #d4d4d4;
+}
+
+.current_hex{
+  background: #296ec5 !important;
+  color: white !important;
+}
+
+#right-viewer{
+    flex: 1;
 }
 
 #load-memory{
+  line-height: 0;
   background: #0070ff;
   width: 100%;
-  padding: 15px 0px;
+  padding: 25px 0px;
   border: 0;
   display: block;
   color: white;
@@ -32,15 +49,57 @@ body{
 }
 
 #hex-viewer{
-  margin: 10px;
-  height: 403px;
+  margin: 0px 10px;
+  height: 500px;
   overflow-x: hidden;
   border: 1px solid #d4d4d4;
+}
+
+/* Buttons */
+#buttons{
+  margin: 10px 10px;
+  display: flex;
+}
+
+#buttons > *{
+  flex: 1;
+}
+
+#buttons > button{
+  border: 1px solid #d4d4d4;
+  background: #f3f3f3;
+  padding: 10px 20px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #444;
+}
+
+#number_skip{
+  box-shadow: 3px 3px 0px #d4d4d4 inset;
+  width: 55px;
+  border: 1px solid #d4d4d4;
+  background: white;
+  border-radius: 3px;
+  padding: 0 0 0 10px;
+}
+
+#play{
+  padding: 10px 15px 10px 8px !important;
+  margin: 0px 10px;
+}
+
+.stop:before { content: '\e802' !important; }
+
+#buttons > button:hover{
+  background-color: #e2e2e2;
 }
 
 .rows, #hex-header{
   display: flex;
   border-bottom: 1px solid #d4d4d4;
+  background: #f3f3f3;
 }
 
 .rows > .offset, #hex-header > div:nth-of-type(1){
@@ -86,7 +145,7 @@ body{
 }
 
 .rows > .instruction{
-  background: #f9f9f9;
+  background-color: white;
 }
 
 #hex-header > div:nth-of-type(2) {
@@ -112,6 +171,10 @@ body{
   display: flex;
 }
 
+#registers{
+  margin-top: 20px;
+}
+
 .tabs > div.selected{
   background: #0070ff;
   color: white;
@@ -124,10 +187,11 @@ body{
 }
 
 .table{
-
+  display: flex;
+  flex-direction: column;
 }
 
-.table > .header, .table > .body{
+.table > .header, .table .row{
   display: flex;
   border-bottom: 1px solid #d4d4d4;
 }
@@ -136,9 +200,20 @@ body{
   background: #f5f5f5;
 }
 
-.table > .body > div, .table > .header > div{
+#header-hex{
+  height: 50px;
+}
+
+.offset_table{
+  width: 50px !important;
+  flex: auto !important;
+  background: #0070ff !important;
+  color: white !important;
+}
+
+.table .row > div, .table > .header > div{
   display: flex;
-  height: 30px;
+  min-height: 30px;
   align-items: center;
   justify-content: center;
   border-left: 1px solid #d4d4d4;
