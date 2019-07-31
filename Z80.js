@@ -2,6 +2,12 @@ const change_bit_position = (b, n, v) => { return b ^= (-v ^ b) & (1 << n); };
 const complement_two = (n, b) => n - ((n >= (1 << (b - 1))) << b);
 
 // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
+// https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+
+
+const BITS_ADDRESS = 8, HALF_ADDRESS = BITS_ADDRESS >> 1;
+const ADDRESS_MASK = (1 << BITS_ADDRESS) - 1, HALF_ADDRESS_MASK = (1 << HALF_ADDRESS) - 1;
+
 
 class Z80{
   constructor(){
@@ -67,10 +73,6 @@ class Z80{
       (Total 0x10000 Memory Offsets).
     */
 
-    this.BITS_ADDRESS = 8;
-    this.HALF_ADDRESS = this.BITS_ADDRESS >> 1;
-    this.ADDRESS_MASK = (1 << this.BITS_ADDRESS) - 1;
-    this.HALF_ADDRESS_MASK = (1 << this.HALF_ADDRESS) - 1;
     this.memory = null;
 
     // First level instruction table
@@ -78,8 +80,8 @@ class Z80{
     this.instruction_pointer = new Array(
       i.NOP     , i.LD_BC_D16, i.LD_PBC_A , i.INC_BC  , i.INC_B      , i.DEC_B   , i.LD_B_D8  , i.RLCA    , i.LD_D16_SP , i.ADD_HL_BC, i.LD_A_PBC , i.DEC_BC , i.INC_C     , i.DEC_C   , i.LD_C_D8  , i.RRCA   ,
       i.STOP    , i.LD_DE_D16, i.LD_PDE_A , i.INC_DE  , i.INC_D      , i.DEC_D   , i.LD_D_D8  , i.RLA     , i.JR_D8     , i.ADD_HL_DE, i.LD_A_PDE , i.DEC_DE , i.INC_E     , i.DEC_E   , i.LD_E_D8  , i.RRA    ,
-      i.JR_NZ_D8, i.LD_HL_D16, i.LD_IHL_A , i.INC_HL  , i.INC_H      , i.DEC_H   , i.LD_H_D8  , i.DAA     , i.JR_Z_D8   , i.ADD_HL_HL, i.LD_A_IHL , i.DEC_HL , i.INC_L     , i.DEC_L   , i.LD_L_D8  , i.CPL    ,
-      i.JR_NC_D8, i.LD_SP_D16, i.LD_DHL_A , i.INC_SP  , i.INC_PHL    , i.DEC_PHL , i.LD_PHL_D8, i.SCF     , i.JR_C_D8   , i.ADD_HL_SP, i.LD_A_DHL , i.DEC_SP , i.INC_A     , i.DEC_A   , i.LD_A_D8  , i.CCF    ,
+      i.JRNZ_D8 , i.LD_HL_D16, i.LD_IHL_A , i.INC_HL  , i.INC_H      , i.DEC_H   , i.LD_H_D8  , i.DAA     , i.JRZ_D8    , i.ADD_HL_HL, i.LD_A_IHL , i.DEC_HL , i.INC_L     , i.DEC_L   , i.LD_L_D8  , i.CPL    ,
+      i.JRNC_D8 , i.LD_SP_D16, i.LD_DHL_A , i.INC_SP  , i.INC_PHL    , i.DEC_PHL , i.LD_PHL_D8, i.SCF     , i.JRC_D8    , i.ADD_HL_SP, i.LD_A_DHL , i.DEC_SP , i.INC_A     , i.DEC_A   , i.LD_A_D8  , i.CCF    ,
       i.LD_B_B  , i.LD_B_C   , i.LD_B_D   , i.LD_B_E  , i.LD_B_H     , i.LD_B_L  , i.LD_B_HL  , i.LD_B_A  , i.LD_B_B    , i.LD_C_C   , i.LD_C_D   , i.LD_C_E , i.LD_C_H    , i.LD_C_L  , i.LD_C_HL  , i.LD_C_A ,
       i.LD_D_B  , i.LD_D_C   , i.LD_D_D   , i.LD_D_E  , i.LD_D_H     , i.LD_D_L  , i.LD_D_HL  , i.LD_D_A  , i.LD_D_B    , i.LD_E_C   , i.LD_E_D   , i.LD_E_E , i.LD_E_H    , i.LD_E_L  , i.LD_E_HL  , i.LD_E_A ,
       i.LD_H_B  , i.LD_H_C   , i.LD_H_D   , i.LD_H_E  , i.LD_H_H     , i.LD_H_L  , i.LD_H_HL  , i.LD_H_A  , i.LD_H_B    , i.LD_L_C   , i.LD_L_D   , i.LD_L_E , i.LD_L_H    , i.LD_L_L  , i.LD_L_HL  , i.LD_L_A ,
@@ -113,29 +115,15 @@ class Z80{
       i.SET_4_B, i.SET_4_C, i.SET_4_D, i.SET_4_E, i.SET_4_H, i.SET_4_L, i.SET_4_PHL, i.SET_4_A, i.SET_5_B, i.SET_5_C, i.SET_5_D, i.SET_5_E, i.SET_5_H, i.SET_5_L, i.SET_5_PHL, i.SET_5_A,
       i.SET_6_B, i.SET_6_C, i.SET_6_D, i.SET_6_E, i.SET_6_H, i.SET_6_L, i.SET_6_PHL, i.SET_6_A, i.SET_7_B, i.SET_7_C, i.SET_7_D, i.SET_7_E, i.SET_7_H, i.SET_7_L, i.SET_7_PHL, i.SET_7_A,
     );
+
+    this.jump_instructions = [0x20, 0x30, 0xC2, 0xD2, 0xC3, 0xE9, 0xDA, 0xCA, 0x18, 0x28, 0x38];
   };
+
+  is_jump_instruction(instruction){ return (this.jump_instructions.indexOf(instruction) >= 0) };
 
   /* UNIMPLEMENTED INSTRUCTION SET */
   RET_NZ(op){ throw "Unimplemented Instruction"; };
   RET_NC(op){ throw "Unimplemented Instruction"; };
-  
-  ADD_A_B(op){ throw "Unimplemented Instruction"; };
-  ADD_A_C(op){ throw "Unimplemented Instruction"; };
-  ADD_A_D(op){ throw "Unimplemented Instruction"; };
-  ADD_A_E(op){ throw "Unimplemented Instruction"; };
-  ADD_A_H(op){ throw "Unimplemented Instruction"; };
-  ADD_A_L(op){ throw "Unimplemented Instruction"; };
-  ADD_A_PHL(op){ throw "Unimplemented Instruction"; };
-  ADD_A_A(op){ throw "Unimplemented Instruction"; };
-
-  ADC_A_B(op){ throw "Unimplemented Instruction"; };
-  ADC_A_C(op){ throw "Unimplemented Instruction"; };
-  ADC_A_D(op){ throw "Unimplemented Instruction"; };
-  ADC_A_E(op){ throw "Unimplemented Instruction"; };
-  ADC_A_H(op){ throw "Unimplemented Instruction"; };
-  ADC_A_L(op){ throw "Unimplemented Instruction"; };
-  ADC_A_PHL(op){ throw "Unimplemented Instruction"; };
-  ADC_A_A(op){ throw "Unimplemented Instruction"; };
 
   SUB_B(op, r1){ throw "Unimplemented Instruction"; };
   SUB_C(op, r1){ throw "Unimplemented Instruction"; };
@@ -156,7 +144,7 @@ class Z80{
   SBC_A(op, r1){ throw "Unimplemented Instruction"; };
 
   // ------------ INSTRUCTIONS ----------------------------
-  instruction(pc = this.PC){
+  fetch_instruction(pc = this.PC){
     // Special Instruction
     let instruction_set = this.instruction_pointer;
     let memory = this.memory[pc];
@@ -169,6 +157,9 @@ class Z80{
   };
 
   // ------------ REGISTERS ----------------------------
+  /* Instruction Register */
+  get instruction_register(){ return this.memory[this.PC]; };
+
   /* Getter/Setter 8 bits Register */
   get register_A(){ return this.register_8bits[this.register_bit_A]; };
   get register_B(){ return this.register_8bits[this.register_bit_B]; };
@@ -179,14 +170,14 @@ class Z80{
   get register_H(){ return this.register_8bits[this.register_bit_H]; };
   get register_L(){ return this.register_8bits[this.register_bit_L]; };
 
-  set register_A(_v){ this.register_8bits[this.register_bit_A] = _v & this.ADDRESS_MASK; };
-  set register_B(_v){ this.register_8bits[this.register_bit_B] = _v & this.ADDRESS_MASK; };
-  set register_C(_v){ this.register_8bits[this.register_bit_C] = _v & this.ADDRESS_MASK; };
-  set register_D(_v){ this.register_8bits[this.register_bit_D] = _v & this.ADDRESS_MASK; };
-  set register_E(_v){ this.register_8bits[this.register_bit_E] = _v & this.ADDRESS_MASK; };
-  set register_F(_v){ this.register_8bits[this.register_bit_F] = _v & this.ADDRESS_MASK; };
-  set register_H(_v){ this.register_8bits[this.register_bit_H] = _v & this.ADDRESS_MASK; };
-  set register_L(_v){ this.register_8bits[this.register_bit_L] = _v & this.ADDRESS_MASK; };
+  set register_A(_v){ this.register_8bits[this.register_bit_A] = _v & ADDRESS_MASK; };
+  set register_B(_v){ this.register_8bits[this.register_bit_B] = _v & ADDRESS_MASK; };
+  set register_C(_v){ this.register_8bits[this.register_bit_C] = _v & ADDRESS_MASK; };
+  set register_D(_v){ this.register_8bits[this.register_bit_D] = _v & ADDRESS_MASK; };
+  set register_E(_v){ this.register_8bits[this.register_bit_E] = _v & ADDRESS_MASK; };
+  set register_F(_v){ this.register_8bits[this.register_bit_F] = _v & ADDRESS_MASK; };
+  set register_H(_v){ this.register_8bits[this.register_bit_H] = _v & ADDRESS_MASK; };
+  set register_L(_v){ this.register_8bits[this.register_bit_L] = _v & ADDRESS_MASK; };
 
   /* Shared register 16 bits */
   get register_HL(){ return ((this.register_H << 0x8) | this.register_L); };
@@ -197,10 +188,10 @@ class Z80{
   get register_PC(){ return this.PC; };
 
   // HL is the only used inmediately in instructions.
-  set register_HL(_v){ this.register_H = _v >> this.BITS_ADDRESS; this.register_L = _v & this.ADDRESS_MASK; };
-  set register_BC(_v){ this.register_B = _v >> this.BITS_ADDRESS; this.register_C = _v & this.ADDRESS_MASK; };
-  set register_DE(_v){ this.register_D = _v >> this.BITS_ADDRESS; this.register_E = _v & this.ADDRESS_MASK; };
-  set register_AF(_v){ this.register_A = _v >> this.BITS_ADDRESS; this.register_F = _v & this.ADDRESS_MASK; };
+  set register_HL(_v){ this.register_H = _v >> BITS_ADDRESS; this.register_L = _v & ADDRESS_MASK; };
+  set register_BC(_v){ this.register_B = _v >> BITS_ADDRESS; this.register_C = _v & ADDRESS_MASK; };
+  set register_DE(_v){ this.register_D = _v >> BITS_ADDRESS; this.register_E = _v & ADDRESS_MASK; };
+  set register_AF(_v){ this.register_A = _v >> BITS_ADDRESS; this.register_F = _v & ADDRESS_MASK; };
 
   /* Flags (F Register 8 bits)
     Bit 0 -> 0
@@ -243,16 +234,63 @@ class Z80{
   /* Miscellaneous */
   /* NOP (The machine does nothing) */
   NOP(op){};
+  
   /* HALT (Freezes until interrupt occurs) */
-  HALT(op){};
+  HALT(op){ throw "Unimplemented Instruction"; };
+  
   /* STOP (Halt CPU and LCD until interrupt occurs) - SUPPOSED TO BE 10 00 (2 bytes long)*/
-  STOP(op){};
+  STOP(op){ throw "Unimplemented Instruction"; };
+  
   /* [E/D]I (Enable/Disable Interrupts After calling the instruction not at the moment) */
-  EI(op){};
-  DI(op){};
+  EI(op){ throw "Unimplemented Instruction"; };
+  DI(op){ throw "Unimplemented Instruction"; };
+
+  /* Operations */
+  /* Additions without carry */
+  ADD_A_R(r1){
+    let operation = this.register_A + r1;
+    this.register_A      = operation & ADDRESS_MASK;
+    this.negative_flag   = false;
+    this.half_carry_flag = (operation >> (HALF_ADDRESS - 1)) & 1;
+    this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
+  };
+
+  ADD_A_A(op){ op.ADD_A_R(op, op.register_A); };
+  ADD_A_B(op){ op.ADD_A_R(op, op.register_B); };
+  ADD_A_C(op){ op.ADD_A_R(op, op.register_C); };
+  ADD_A_D(op){ op.ADD_A_R(op, op.register_D); };
+  ADD_A_E(op){ op.ADD_A_R(op, op.register_E); };
+  ADD_A_H(op){ op.ADD_A_R(op, op.register_H); };
+  ADD_A_L(op){ op.ADD_A_R(op, op.register_L); };
+  ADD_A_PHL(op){ op.ADD_A_R(op, op.memory[op.register_HL]); };
+  ADD_A_D8(op, n){ op.ADD_A_R(op, op.memory[n]); };
+
+  
+  /* Additions with carry */
+  ADC_A_R(r1){
+    let operation = this.register_A + r1 + this.carry_flag;
+    this.register_A      = operation & ADDRESS_MASK;
+    this.negative_flag   = false;
+    this.half_carry_flag = (operation >> (HALF_ADDRESS - 1)) & 1;
+    this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
+  };
+  
+  ADC_A_A(op){ op.ADC_A_R(op, op.register_A); };
+  ADC_A_B(op){ op.ADC_A_R(op, op.register_B); };
+  ADC_A_C(op){ op.ADC_A_R(op, op.register_C); };
+  ADC_A_D(op){ op.ADC_A_R(op, op.register_D); };
+  ADC_A_E(op){ op.ADC_A_R(op, op.register_E); };
+  ADC_A_H(op){ op.ADC_A_R(op, op.register_H); };
+  ADC_A_L(op){ op.ADC_A_R(op, op.register_L); };
+  ADC_A_PHL(op){ op.ADC_A_R(op, op.memory[op.register_HL]); };
+  ADC_A_D8(op, n){ op.ADC_A_R(op, op.memory[n]); };
+  
+
   /* CPL (Complement A Register) */
   CPL(op){
-
+    this.register_A = ~this.register_A & ADDRESS_MASK;
+    this.negative_flag   = true;
+    this.half_carry_flag = true;
   };
 
   /* CP Compare A r (Eq A - r) */
@@ -279,6 +317,7 @@ class Z80{
     op.half_carry_flag = 0;
     op.carry_flag = 1;
   };
+
   /* CCF (Complement Carry Flag) */
   CCF(op){
     op.negative_flag = 0;
@@ -621,28 +660,28 @@ class Z80{
   };
 
   // Increment Program Counter if Zero Flag is Set
-  JR_NZ_D8(op, d8){
+  JRNZ_D8(op, d8){
     if(op.zero_flag === 0){
       op.JR_D8(op, d8);
     }
   };
 
   // Increment Program Counter if Zero Flag
-  JR_Z_D8(op, d8){
+  JRZ_D8(op, d8){
     if(op.zero_flag === 1){
       op.JR_D8(op, d8);
     }
   };
 
   // Increment Program Counter  if Carry Flag
-  JR_NC_D8(op, d8){
+  JRNC_D8(op, d8){
     if(op.carry_flag === 0){
       op.JR_D8(op, d8);
     }
   };
 
   // Increment Program Counter if Carry Flag is Set
-  JR_C_D8(op, d8){
+  JRC_D8(op, d8){
     if(op.carry_flag === 1){
       op.JR_D8(op, d8);
     }
@@ -654,8 +693,8 @@ class Z80{
   // ------------ PREFIX - SECOND LEVEL TABLE --------------
   // Rotation Left through Carry Flag (hi = cf, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
   RL_R(r1){
-    let lo = r1 & ((1 << (this.BITS_ADDRESS - 1)) - 1);
-    let hi = r1 >> (this.BITS_ADDRESS - 1);
+    let lo = r1 & ((1 << (BITS_ADDRESS - 1)) - 1);
+    let hi = r1 >> (BITS_ADDRESS - 1);
     let rt = this.carry_flag | (lo << 1);
     this.negative_flag   = false;
     this.half_carry_flag = false;
@@ -676,7 +715,7 @@ class Z80{
   RR_R(r1){
     let lo = r1 & 0x1;
     let hi = r1 >> 1;
-    let rt = (lo << (this.BITS_ADDRESS - 1)) | this.carry_flag;
+    let rt = (lo << (BITS_ADDRESS - 1)) | this.carry_flag;
     this.negative_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = lo;
@@ -694,8 +733,8 @@ class Z80{
 
   // Rotation Left Circular (hi = a7, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
   RLC_R(r1){
-    let lo = r1 & ((1 << (this.BITS_ADDRESS - 1)) - 1);
-    let hi = r1 >> (this.BITS_ADDRESS - 1);
+    let lo = r1 & ((1 << (BITS_ADDRESS - 1)) - 1);
+    let hi = r1 >> (BITS_ADDRESS - 1);
     let rt = hi | (lo << 1);
     this.zero_flag       = rt === 0;
     this.negative_flag   = false;
@@ -717,7 +756,7 @@ class Z80{
   RRC_R(r1){
     let lo = r1 & 0x1;
     let hi = r1 >> 1;
-    let rt = (lo << (this.BITS_ADDRESS - 1)) | hi;
+    let rt = (lo << (BITS_ADDRESS - 1)) | hi;
     this.zero_flag       = rt === 0;
     this.negative_flag   = false;
     this.half_carry_flag = false;
@@ -736,9 +775,9 @@ class Z80{
 
   // Swap halves of register
   SWAP_R(r1){
-    let half_1 = r1 & this.HALF_ADDRESS_MASK;
-    let half_2 = r1 >> this.HALF_ADDRESS;
-    let result = (half_1 << (this.HALF_ADDRESS - 1)) | half_2;
+    let half_1 = r1 & HALF_ADDRESS_MASK;
+    let half_2 = r1 >> HALF_ADDRESS;
+    let result = (half_1 << (HALF_ADDRESS - 1)) | half_2;
     this.zero_flag       = result === 0;
     this.negative_flag   = false;
     this.half_carry_flag = false;
@@ -1010,7 +1049,7 @@ class Z80{
 
   /* Cycle */
   cycle(){
-    let ins = this.instruction();
+    let ins = this.fetch_instruction();
     // Check if the instruction doesn't exists.
     if(isFinite(ins)){
       throw new Error(`Instruction (0x${ins.toString(16)}) is not implemented.`);

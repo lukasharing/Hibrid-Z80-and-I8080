@@ -1,3 +1,5 @@
+
+// https://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM
 window.onload = () => {
   const fill = (char, num, string) => new Array(Math.max(0, num - string.length)).fill(char).join("") + string;
   const hex = (num, n, b = true) => `${b?'0x':''}${fill('0', n, num.toString(16).toUpperCase())}`;
@@ -8,10 +10,13 @@ window.onload = () => {
     const viewer = document.getElementById("container");
     viewer.height = 200;
 
-    let html = "";
-
     let pc = processor.register_PC;
-    for(let i = 0; i < 12; ++i){
+    let num_instruction = (viewer.parentElement.clientHeight - 30) / 30;
+
+    // Create Table [offset | Opcode | value]
+    let i = 0;
+    let instruction_table = [];
+    while(i < num_instruction){
       let instruction = processor.instruction(pc);
       let full_instruction = 0;
       for(let k = 0; k < instruction.length && !isFinite(instruction); ++k){
@@ -20,21 +25,54 @@ window.onload = () => {
 
       let replacement = isFinite(instruction) ? "undefined" : instruction.name;
       replacement = replacement.replace(/\_/g, ' ');
-      replacement = replacement.replace(/ D16/g, ' ' + hex(full_instruction >> 0x8, 4));
-      replacement = replacement.replace(/ D8/g, ' ' + hex(full_instruction >> 0x8, 2));
+      replacement = replacement.replace(/ D16/g, ' ' + hex(full_instruction >> 8, 4));
+      replacement = replacement.replace(/ D8/g, ' ' + hex(full_instruction >> 8, 2));
       replacement = replacement.replace(/ PHL/g, " (HL)");
       replacement = replacement.replace(/ PDE/g, " (DE)");
       replacement = replacement.replace(/ PBC/g, " (BC)");
       replacement = replacement.replace(/ DHL/g, " (HL-)");
       replacement = replacement.replace(/ IHL/g, " (HL+)");
 
-      html += `<div class="rows">` +
-                  `<div class="offset">${ hex(pc, 4) }</div>` +
-                  `<div class="memory">${ hex(full_instruction, 2) }</div>`+
-                  `<div class="instruction">${replacement}</div>`+
-               `</div>`;
-     pc += isFinite(instruction) ? 1 : instruction.length;
+      instruction_table[i++] = {
+        position: pc,
+        opcode: replacement,
+        value: full_instruction// >> 8
+      };
+      pc += isFinite(instruction) ? 1 : instruction.length;
     }
+
+    let html = "";
+    // Iterate Over table
+    let number_jumps = 0;
+    for(let i = 0; i < num_instruction; ++i){
+      let cell = instruction_table[i];
+      let offset = parseInt(cell.position);
+      
+      let jump_html = "";
+      // Check if jump Instruction
+      if(processor.is_jump_instruction(cell.value & 0xFF)){
+        let jump_offset = offset + complement_two(cell.value >> 8, 8) + 2;
+
+        let height_jump = -1;
+        // Find Jump Offset
+        for(let j = 0; j < instruction_table.length && height_jump < 0; ++j){
+          height_jump = (instruction_table[j].position === jump_offset) ? j : -1;
+        }
+        // Arrow Calculations
+        let direction = jump_offset < offset;
+        // Clamping
+        height_jump = (height_jump < 0 && !direction ? num_instruction : height_jump) + (height_jump < 0) * (direction - 0.5);
+        let bar_size = Math.abs(height_jump - i) * 30;
+        jump_html = `<div class="arrow-jump jump-${direction ? "top" : "bottom"}" style="width: ${++number_jumps * 6}px; height: ${bar_size}px; top: ${-direction * bar_size + 15}px;"></div>`;
+      }
+      
+      html +=`<div class="rows">
+                <div class="offset">${jump_html} ${ hex(offset, 4) }</div>
+                <div class="opcode">${ hex(cell.value & 0xFF, 2) }</div>
+                <div class="instruction">${ cell.opcode }</div>
+              </div>`;
+    }
+
     viewer.innerHTML = html;
 
     // 8 bits Registers
@@ -102,20 +140,14 @@ window.onload = () => {
     };
   };
 
-  document.getElementById("load-memory").onclick = function(){
-    document.getElementById("file-loader").click();
-  };
+  document.getElementById("load-memory").onclick = () => document.getElementById("file-loader").click();
 
   document.getElementById("file-loader").onchange = function(file){
-    if(this.files.length > 0){
-      const reader = new FileReader();
+    if(this.files.length === 0) return;
 
-      reader.onload = () => {
-        load_assembly(new Uint8Array(reader.result));
-      };
-
-      reader.readAsArrayBuffer(this.files[0]);
-    }
+    const reader = new FileReader();
+    reader.onload = () => load_assembly(new Uint8Array(reader.result));
+    reader.readAsArrayBuffer(this.files[0]);
   };
 
   document.querySelectorAll("#registers > .tabs > div").forEach(e => {

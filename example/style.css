@@ -50,8 +50,7 @@ body{
 
 #hex-viewer{
   margin: 0px 10px;
-  height: 500px;
-  overflow-x: hidden;
+  height: 600px;
   border: 1px solid #d4d4d4;
 }
 
@@ -102,11 +101,80 @@ body{
   background: #f3f3f3;
 }
 
+.arrow-jump{
+  position: absolute;
+  right: 56px;
+  bottom: 50%;
+  border-left: 1px solid #737373;
+  border-top: 1px solid #737373;
+  border-bottom: 1px solid #737373;
+  z-index: 9;
+}
+
+.jump-top:after, .jump-bottom:after{
+  content: "";
+  position: absolute;
+  right: -5px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6.5px 0 6.5px 5px;
+  border-color: transparent transparent transparent white;
+}
+
+.jump-top:after{ top: -7px; }
+.jump-bottom:after{ bottom: -7px; }
+
+.jump-top:before, .jump-bottom:before {
+  content: "";
+  position: absolute;
+  right: -6px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 8px 7px;
+  border-color: transparent transparent transparent #737373;
+}
+
+.jump-top:before{ top: -8px; }
+.jump-bottom:before{ bottom: -8px; }
+
+
+.arrow-top:after{
+  top: 0;
+}
+
+.arrow-bottom:before{
+  bottom: 0;
+}
+
 .rows > .offset, #hex-header > div:nth-of-type(1){
+  position: relative;
   width: 55px;
   line-height: 0;
-  padding: 15px 0px;
+  padding: 14.5px 0px;
   text-align: center;
+  font-size: 13px;
+  color: #404040;
+  font-weight: bold;
+}
+
+.rows > .opcode, #hex-header > div:nth-of-type(2), .multitab > .tabs > div{
+  width: 65px;
+  line-height: 0;
+  padding: 14.5px 0px;
+  text-align: center;
+  font-size: 13px;
+  color: #404040;
+  font-weight: bold;
+}
+
+.rows > .instruction, #hex-header > div:nth-of-type(3){
+  position: relative;
+  flex: 1;
+  line-height: 0;
+  padding: 14.5px 12px;
+  text-align: left;
   font-size: 13px;
   color: #404040;
   font-weight: bold;
@@ -118,30 +186,9 @@ body{
   background: #006fff;
 }
 
-.rows > .memory, #hex-header > div:nth-of-type(2), .multitab > .tabs > div{
-  width: 65px;
-  line-height: 0;
-  padding: 15px 0px;
-  text-align: center;
-  font-size: 13px;
-  color: #404040;
-  font-weight: bold;
-}
-
-.rows > .memory{
+.rows > .opcode{
   background: #e4e4e4;
   border-right: 1px solid #c3c3c3;
-}
-
-.rows > .instruction, #hex-header > div:nth-of-type(3){
-  position: relative;
-  flex: 1;
-  line-height: 0;
-  padding: 15px 12px;
-  text-align: left;
-  font-size: 13px;
-  color: #404040;
-  font-weight: bold;
 }
 
 .rows > .instruction{
@@ -192,6 +239,7 @@ body{
 }
 
 .table > .header, .table .row{
+  position: relative;
   display: flex;
   border-bottom: 1px solid #d4d4d4;
 }
