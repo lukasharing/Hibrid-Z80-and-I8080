@@ -1,9 +1,13 @@
-const change_bit_position = (b, n, v) => { return b ^= (-v ^ b) & (1 << n); };
-const complement_two = (n, b) => n - ((n >= (1 << (b - 1))) << b);
 
+/* Research */
+// https://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM (BIOS)
 // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 // https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
 
+
+const change_bit_position = (b, n, v) => { return b ^= (-v ^ b) & (1 << n); };
+// Complement's 2 (Signed 8bit number)
+const complement_two = (n, b) => n - ((n >= (1 << (b - 1))) << b);
 
 const BITS_ADDRESS = 8, HALF_ADDRESS = BITS_ADDRESS >> 1;
 const ADDRESS_MASK = (1 << BITS_ADDRESS) - 1, HALF_ADDRESS_MASK = (1 << HALF_ADDRESS) - 1;
@@ -29,7 +33,6 @@ class Z80{
     ]);
     this.register_bit_B = 0x0;
     this.register_bit_C = 0x1;
-    this.register_bit_A = 0x2;
     this.register_bit_D = 0x2;
     this.register_bit_E = 0x3;
     this.register_bit_H = 0x4;
@@ -200,7 +203,7 @@ class Z80{
     Bit 3 -> 0
     Bit 4 -> C (Carry Flag)
     Bit 5 -> H (Half-Carry Flag)
-    Bit 6 -> N (Negative Number Flag)
+    Bit 6 -> N (Subtraction Flag)
     Bit 7 -> Z (Zero Flag)
   */
   /* Set Flags */
@@ -224,9 +227,10 @@ class Z80{
   set zero_flag(v){ this.register_F = change_bit_position(this.register_F, 7, v); };
 
   // ------------ STACK ----------------------------
-  pop_stack_byte(){ this.SP -= 1; return this.memory[this.SP + 1]; };
+  push_stack_byte(byte){ this.memory[this.SP]; this.SP += 1; };
+  push_stack_short(b1, b2){ this.memory[this.SP]; this.SP += 1; };
 
-  // TODO: Is it little-endian or big-endian??
+  pop_stack_byte(){ this.SP -= 1; return this.memory[this.SP + 1]; };
   pop_stack_short(){ this.SP -= 2; return ((this.memory[this.SP + 2] << 8) | this.memory[this.SP + 1]); };
 
   // ------------ INSTRUCTIONS ---------------------
@@ -486,7 +490,7 @@ class Z80{
   /* LDHL SP r8 */
   // TODO: Is this right ? this.PC += r8
   LDHL_SP_R8(op, d8){
-    let r8 = complement_two(d8, 8); // Complement's 2 (Signed 8bit number)
+    let r8 = complement_two(d8, 8);
     let effective_address = op.SP + r8;
     op.register_HL = op.memory[effective_address];
     op.carry_flag = (effective_address & 0x100) === 0x100;
@@ -656,7 +660,7 @@ class Z80{
 
   // Increment Program Counter.
   JR_D8(op, d8){
-    op.PC += complement_two(d8, 8) - 2; // Subtract 2 of opcode + byte
+    op.PC += complement_two(d8, 8);
   };
 
   // Increment Program Counter if Zero Flag is Set
@@ -688,7 +692,11 @@ class Z80{
   };
 
   /* CALL */
-  CALL_D16(op, d8, d16){  };
+  CALL_D16(op, d8, d16){
+
+    op.push_
+
+  };
 
   // ------------ PREFIX - SECOND LEVEL TABLE --------------
   // Rotation Left through Carry Flag (hi = cf, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
@@ -796,9 +804,9 @@ class Z80{
 
   // Check nth-bit from register A, and set it accumulator bit on/off
   BIT_K_N(k, r1){
-    this.zero_flag       = ~(k >> r1) & 0x1;
-    this.half_carry_flag = true;
+    this.zero_flag       = ~(r1 >> k) & 0x1;
     this.negative_flag   = false;
+    this.half_carry_flag = true;
   };
 
   BIT_0_A(op, bc){ op.BIT_K_N(0, op.register_A); };
@@ -1048,15 +1056,18 @@ class Z80{
   // ------------ MAIN ----------------------------
 
   /* Cycle */
+  /*
+
+  Probabily 3 phases. (Research)
+    Fetch, Decode and Execute
+
+  */
   cycle(){
-    let ins = this.fetch_instruction();
-    // Check if the instruction doesn't exists.
-    if(isFinite(ins)){
-      throw new Error(`Instruction (0x${ins.toString(16)}) is not implemented.`);
-    }
-    ins(this, ...new Array(ins.length - 1).fill(1).map((a, b) => this.memory[this.PC + b + 1]));
-    this.PC += ins.length;
-    this.cycles += ins.length;
-    return ins;
+    let instruction = this.fetch_instruction();
+    console.log(instruction);
+    instruction(this, ...new Array(instruction.length - 1).fill(1).map((a, b) => this.memory[this.PC + b + 1]));
+    this.PC += instruction.length;
+    this.cycles += instruction.length;
+    return instruction;
   };
 };
