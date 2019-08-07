@@ -4,7 +4,7 @@ const fill = (char, num, string) => new Array(Math.max(0, num - string.length)).
 const hex = (num, n, b = true) => `${b?'0x':''}${fill('0', n, num.toString(16).toUpperCase())}`;
 
 const visualize = _ => {
-  const viewer = document.getElementById("container");
+  const viewer = document.getElementById("instruction-container");
   viewer.height = 200;
 
   let pc = processor.register_PC;
@@ -65,7 +65,7 @@ const visualize = _ => {
       jump_html = `<div class="arrow-jump jump-${direction ? "top" : "bottom"}" style="width: ${++number_jumps * 6}px; height: ${bar_size}px; top: ${-direction * bar_size + 15}px;"></div>`;
     }
     
-    html +=`<div class="rows">
+    html +=`<div class="row">
               <div class="offset">${jump_html} ${ hex(offset, 4) }</div>
               <div class="opcode">${ hex(cell.value & 0xFF, 2) }</div>
               <div class="instruction">${ cell.opcode }</div>
@@ -76,17 +76,18 @@ const visualize = _ => {
 
   /* Visualize Instructions */
   // 8 bits Registers
-  const bits_8 = document.querySelector("#registers > .tab_container").children[0];
-  processor.register_8bits.forEach((e, i) => bits_8.children[1].children[i].innerHTML = hex(e, 2));
+  const bits_8 = document.querySelector("#registers > .tab_container > .table:first-child > .table_container > .row");
+  processor.register_8bits.forEach((e, i) => bits_8.children[i].innerHTML = hex(e, 2));
 
   // 16 bits Registers
-  const bits_16 = document.querySelector("#registers > .tab_container").children[1];
-  bits_16.children[1].children[0].innerHTML = hex(processor.register_BC, 4);
-  bits_16.children[1].children[1].innerHTML = hex(processor.register_DE, 4);
-  bits_16.children[1].children[2].innerHTML = hex(processor.register_HL, 4);
-  bits_16.children[1].children[3].innerHTML = hex(processor.register_AF, 4);
-  bits_16.children[1].children[4].innerHTML = hex(processor.register_PC, 4);
-  bits_16.children[1].children[5].innerHTML = hex(processor.register_SP, 4);
+  const bits_16 = document.querySelector("#registers > .tab_container > .table:last-child > .table_container > .row");
+
+  bits_16.children[0].innerHTML = hex(processor.register_BC, 4);
+  bits_16.children[1].innerHTML = hex(processor.register_DE, 4);
+  bits_16.children[2].innerHTML = hex(processor.register_HL, 4);
+  bits_16.children[3].innerHTML = hex(processor.register_AF, 4);
+  bits_16.children[4].innerHTML = hex(processor.register_PC, 4);
+  bits_16.children[5].innerHTML = hex(processor.register_SP, 4);
 
   // Set Table Values
   const table_html = document.getElementById("hex-values");
@@ -108,12 +109,13 @@ const visualize = _ => {
 
   /* Visualize Stack */
   const stack_html = document.getElementById("stack-values");
+  console.log(stack_html.parentElement.parentElement.clientHeight);
   let size_stack = (stack_html.parentElement.parentElement.clientHeight - 51) / 30;
   let stack = "";
   for(let i = processor.SP; i < Math.min(processor.SP + size_stack, 0x10000); ++i){
     stack += `<div class="row"><div>${processor.memory[i]}</div></div>`;
   }
-  stack_html.innerHTML = stack;
+  //stack_html.innerHTML = stack;
 
 };
 
