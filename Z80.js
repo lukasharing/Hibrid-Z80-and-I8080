@@ -3,6 +3,7 @@
 // https://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM (BIOS)
 // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 // https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+// http://gameboy.mongenel.com/dmg/asmmemmap.html
 
 
 const change_bit_position = (b, n, v) => { return b ^= (-v ^ b) & (1 << n); };
@@ -119,10 +120,13 @@ class Z80{
       i.SET_6_B, i.SET_6_C, i.SET_6_D, i.SET_6_E, i.SET_6_H, i.SET_6_L, i.SET_6_PHL, i.SET_6_A, i.SET_7_B, i.SET_7_C, i.SET_7_D, i.SET_7_E, i.SET_7_H, i.SET_7_L, i.SET_7_PHL, i.SET_7_A,
     );
 
-    this.jump_instructions = [0x20, 0x30, 0xC2, 0xD2, 0xC3, 0xE9, 0xDA, 0xCA, 0x18, 0x28, 0x38];
+    this.short_jump_instructions = [0x20, 0x30, 0xD2, 0xE9, 0x18, 0x28, 0x38];
+    this.long_jump_instruction = [0xCD, 0xDC, 0xCC, 0xD4, 0xC4, 0xCA, 0xDA, 0xC3, 0xC2];
   };
 
-  is_jump_instruction(instruction){ return (this.jump_instructions.indexOf(instruction) >= 0) };
+  is_jump_instruction(instruction){ return (this.is_short_jump_instruction(instruction) || this.is_long_jump_instruction(instruction)); };
+  is_short_jump_instruction(instruction){ return (this.short_jump_instructions.indexOf(instruction) >= 0) };
+  is_long_jump_instruction(instruction){ return (this.long_jump_instruction.indexOf(instruction) >= 0); }
 
   /* UNIMPLEMENTED INSTRUCTION SET */
   RET_NZ(op){ throw "Unimplemented Instruction"; };
@@ -145,6 +149,19 @@ class Z80{
   SBC_L(op, r1){ throw "Unimplemented Instruction"; };
   SBC_PHL(op, r1){ throw "Unimplemented Instruction"; };
   SBC_A(op, r1){ throw "Unimplemented Instruction"; };
+  
+  PUSH_BC(op){ throw "Unimplemented Instruction"; };
+  PUSH_DE(op){ throw "Unimplemented Instruction"; };
+  PUSH_HL(op){ throw "Unimplemented Instruction"; };
+  PUSH_AF(op){ throw "Unimplemented Instruction"; };
+
+  
+  RLCA(op){ throw "Unimplemented Instruction"; };
+  RLA(op){ throw "Unimplemented Instruction"; };
+  DAA(op){ throw "Unimplemented Instruction"; };
+  
+  RET(op){ throw "Unimplemented Instruction"; };
+  RETI(op){ throw "Unimplemented Instruction"; };
 
   // ------------ INSTRUCTIONS ----------------------------
   fetch_instruction(pc = this.PC){
@@ -155,8 +172,9 @@ class Z80{
       ++pc;
       instruction_set = this.instruction_cb;
     }
+    memory = this.memory[pc];
     // Return Normal instruction
-    return instruction_set[this.memory[pc]];
+    return {instruction: instruction_set[memory], hexadecimal: memory};
   };
 
   // ------------ REGISTERS ----------------------------
@@ -227,11 +245,11 @@ class Z80{
   set zero_flag(v){ this.register_F = change_bit_position(this.register_F, 7, v); };
 
   // ------------ STACK ----------------------------
-  push_stack_byte(byte){ this.memory[this.SP]; this.SP += 1; };
-  push_stack_short(b1, b2){ this.memory[this.SP]; this.SP += 1; };
+  push_stack_byte(byte){ this.memory[this.SP] = byte; this.SP -= 1; };
+  push_stack_short(short){  this.push_stack_byte(short & 0xFF);  this.push_stack_byte(short >> 8); }; 
 
-  pop_stack_byte(){ this.SP -= 1; return this.memory[this.SP + 1]; };
-  pop_stack_short(){ this.SP -= 2; return ((this.memory[this.SP + 2] << 8) | this.memory[this.SP + 1]); };
+  pop_stack_byte(){ this.SP += 1; return this.memory[this.SP + 1]; };
+  pop_stack_short(){ this.SP += 2; return ((this.memory[this.SP + 2] << 8) | this.memory[this.SP + 1]); };
 
   // ------------ INSTRUCTIONS ---------------------
 
@@ -693,9 +711,10 @@ class Z80{
 
   /* CALL */
   CALL_D16(op, d8, d16){
-
-    op.push_
-
+    console.log(1);
+    let offset_next_instruction = op.PC + 3;
+    op.push_stack_short(offset_next_instruction);
+    op.PC = (d8 | (d16 << 8)) - 3; // Subtract 2
   };
 
   // ------------ PREFIX - SECOND LEVEL TABLE --------------
@@ -1063,11 +1082,15 @@ class Z80{
 
   */
   cycle(){
-    let instruction = this.fetch_instruction();
-    console.log(instruction);
+    let instruction_obj = this.fetch_instruction();
+    let instruction = instruction_obj.instruction;
     instruction(this, ...new Array(instruction.length - 1).fill(1).map((a, b) => this.memory[this.PC + b + 1]));
-    this.PC += instruction.length;
-    this.cycles += instruction.length;
-    return instruction;
+    
+    if(this.is_jump_instruction(instruction)){
+      this.PC += instruction_obj.length;
+    }
+
+    this.cycles += instruction_obj.length;
+    return instruction_obj;
   };
 };

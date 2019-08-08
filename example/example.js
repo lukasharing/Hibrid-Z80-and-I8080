@@ -109,27 +109,32 @@ const visualize = _ => {
 
   /* Visualize Stack */
   const stack_html = document.getElementById("stack-values");
-  console.log(stack_html.parentElement.parentElement.clientHeight);
-  let size_stack = (stack_html.parentElement.parentElement.clientHeight - 51) / 30;
+  let size_stack = Math.floor((stack_html.parentElement.parentElement.clientHeight - 51) / 30);
   let stack = "";
-  for(let i = processor.SP; i < Math.min(processor.SP + size_stack, 0x10000); ++i){
-    stack += `<div class="row"><div>${processor.memory[i]}</div></div>`;
-  }
-  //stack_html.innerHTML = stack;
 
+  let stack_offset = Math.max(0xFF80, processor.SP);
+  let stack_offset_visible = Math.min(0xFFFE - size_stack, stack_offset);
+
+  // We should look one after (i + 1).
+  for(let i = 0; i < size_stack; ++i){
+    let ostack = stack_offset_visible + i + 1;
+    stack += `<div class="row ${(ostack === stack_offset) ? "stack-position" : ""}"><div>${hex(processor.memory[ostack], 2, false)}</div></div>`;
+  }
+
+  stack_html.innerHTML = stack;
 };
 
 const step = steps => {
-  try{
+  //try{
     /*let cycles_second = parseInt(document.getElementById("number_skip").value);
     for(let i = 0; i < cycles_second - 1; ++i){
       processor.cycle();
     }*/
     processor.cycle();
     visualize(processor);
-  }catch(e){
+  //}catch(e){
     console.error(e.message);
-  }
+  //}
 };
 
 

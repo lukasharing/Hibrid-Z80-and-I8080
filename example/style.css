@@ -22,6 +22,47 @@ button{
   color: #444;
 }
 
+.blue-cell{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 50px;
+  background-color: #0070ff !important;
+  color: white;
+  font-size: 14px;
+}
+
+
+/**** Buttons *****/
+#instruction-buttons{
+  display: flex;
+  justify-content: space-between;
+  width: 230px;
+  margin: 20px 0 0 0;
+}
+
+input[type="number"]{
+  box-shadow: 3px 3px 0px #d4d4d4 inset;
+  width: 55px;
+  border: 1px solid #d4d4d4;
+  background: white;
+  border-radius: 3px;
+  padding: 0 0 0 10px;
+}
+
+#play{
+  padding: 10px 15px 10px 8px !important;
+}
+
+.stop:before { content: '\e802' !important; }
+
+#buttons > button:hover{
+  background-color: #e2e2e2;
+}
+/**** End Buttons *****/
+
+
 /**** Table ****/
 
 .table{
@@ -154,16 +195,17 @@ button{
 #instruction-header{
   display: flex;
   height: 30px;
-  background: #f3f3f3;
 }
 
-#instruction-header > div:nth-of-type(3){
-  position: relative;
-  flex: 1;
+
+#instruction-header > div:nth-of-type(1), #instruction-container > .row > div:nth-of-type(1){
+  width: 60px;
+  flex: none !important;
 }
 
-#instruction-header > div:nth-of-type(2){
+#instruction-header > div:nth-of-type(2), #instruction-container > .row > div:nth-of-type(2){
   width: 65px;
+  flex: none !important;
 }
 
 #instruction-container{
@@ -205,7 +247,7 @@ button{
 
 .arrow-jump{
   position: absolute;
-  right: 76px;
+  right: 60px;
   bottom: 50%;
   border-left: 1px solid #737373;
   border-top: 1px solid #737373;
@@ -266,49 +308,12 @@ button{
   height: 80px;
 }
 
-/* Buttons */
-#instruction-buttons{
-  display: flex;
-  justify-content: space-between;
-  width: 230px;
-  margin: 20px 0 0 0;
-}
-
-#number_skip{
-  box-shadow: 3px 3px 0px #d4d4d4 inset;
-  width: 55px;
-  border: 1px solid #d4d4d4;
-  background: white;
-  border-radius: 3px;
-  padding: 0 0 0 10px;
-}
-
-#play{
-  padding: 10px 15px 10px 8px !important;
-}
-
-.stop:before { content: '\e802' !important; }
-
-#buttons > button:hover{
-  background-color: #e2e2e2;
-}
-
-.blue-cell{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 50px;
-  background-color: #0070ff !important;
-  color: white;
-  font-size: 14px;
-}
-
-/* Stack */
+/**** Stack *****/
 #stack-viewer{
   border-left:  4px solid #d4d4d4;
   display: flex;
   flex-direction: column;
+  flex: none !important;
 }
 
 #stack-values{
@@ -323,3 +328,8 @@ button{
 #stack-values{
   flex: 1;
 }
+
+#stack-values > .row.stack-position > div{
+  outline: 3px solid #0070ff;
+}
+/**** End Stack *****/
