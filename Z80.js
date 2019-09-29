@@ -47,7 +47,7 @@ class Z80{
     // 4.190.000 cycles / second
     this.frequency =  4.19e6; // cycles / second
     this.cycles_per_second = this.frequency / 60;
-    this.actual_cycles = 0;
+    this.cycles = 0;
 
     /*
       Source: http://gameboy.mongenel.com/dmg/asmmemmap.html
@@ -122,46 +122,38 @@ class Z80{
 
     this.short_jump_instructions = [0x20, 0x30, 0xD2, 0xE9, 0x18, 0x28, 0x38];
     this.long_jump_instruction = [0xCD, 0xDC, 0xCC, 0xD4, 0xC4, 0xCA, 0xDA, 0xC3, 0xC2];
+    this.return_instruction = [0xC0, 0xC8, 0xC9, 0xD0, 0xD8, 0xD9];
   };
 
   is_jump_instruction(instruction){ return (this.is_short_jump_instruction(instruction) || this.is_long_jump_instruction(instruction)); };
   is_short_jump_instruction(instruction){ return (this.short_jump_instructions.indexOf(instruction) >= 0) };
   is_long_jump_instruction(instruction){ return (this.long_jump_instruction.indexOf(instruction) >= 0); }
+  is_return_instruction(instruction){ return (this.return_instruction.indexOf(instruction) >= 0); }
 
   /* UNIMPLEMENTED INSTRUCTION SET */
-  RET_NZ(op){ throw "Unimplemented Instruction"; };
-  RET_NC(op){ throw "Unimplemented Instruction"; };
 
-  SUB_B(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_C(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_D(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_E(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_H(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_L(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_PHL(op, r1){ throw "Unimplemented Instruction"; };
-  SUB_A(op, r1){ throw "Unimplemented Instruction"; };
+  SUB_B(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_C(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_D(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_E(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_H(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_L(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_PHL(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SUB_A(op){ throw "Unimplemented Instruction"; return 4; };
+  SUB_D8(op, r1){ throw "Unimplemented Instruction"; return 4; };
 
-  SBC_B(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_C(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_D(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_E(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_H(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_L(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_PHL(op, r1){ throw "Unimplemented Instruction"; };
-  SBC_A(op, r1){ throw "Unimplemented Instruction"; };
-  
-  PUSH_BC(op){ throw "Unimplemented Instruction"; };
-  PUSH_DE(op){ throw "Unimplemented Instruction"; };
-  PUSH_HL(op){ throw "Unimplemented Instruction"; };
-  PUSH_AF(op){ throw "Unimplemented Instruction"; };
+  SBC_B(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SBC_C(op, r1){ throw "Unimplemented Instruction"; return 4;};
+  SBC_D(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SBC_E(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SBC_H(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SBC_L(op, r1){ throw "Unimplemented Instruction"; return 4; };
+  SBC_PHL(op, r1){ throw "Unimplemented Instruction"; return 8; };
+  SBC_A(op, r1){ throw "Unimplemented Instruction"; return 4; };
 
   
   RLCA(op){ throw "Unimplemented Instruction"; };
-  RLA(op){ throw "Unimplemented Instruction"; };
   DAA(op){ throw "Unimplemented Instruction"; };
-  
-  RET(op){ throw "Unimplemented Instruction"; };
-  RETI(op){ throw "Unimplemented Instruction"; };
 
   // ------------ INSTRUCTIONS ----------------------------
   fetch_instruction(pc = this.PC){
@@ -277,15 +269,15 @@ class Z80{
     this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
   };
 
-  ADD_A_A(op){ op.ADD_A_R(op, op.register_A); };
-  ADD_A_B(op){ op.ADD_A_R(op, op.register_B); };
-  ADD_A_C(op){ op.ADD_A_R(op, op.register_C); };
-  ADD_A_D(op){ op.ADD_A_R(op, op.register_D); };
-  ADD_A_E(op){ op.ADD_A_R(op, op.register_E); };
-  ADD_A_H(op){ op.ADD_A_R(op, op.register_H); };
-  ADD_A_L(op){ op.ADD_A_R(op, op.register_L); };
-  ADD_A_PHL(op){ op.ADD_A_R(op, op.memory[op.register_HL]); };
-  ADD_A_D8(op, n){ op.ADD_A_R(op, op.memory[n]); };
+  ADD_A_A(op)    { op.ADD_A_R(op, op.register_A);             return 4; };
+  ADD_A_B(op)    { op.ADD_A_R(op, op.register_B);             return 4; };
+  ADD_A_C(op)    { op.ADD_A_R(op, op.register_C);             return 4; };
+  ADD_A_D(op)    { op.ADD_A_R(op, op.register_D);             return 4; };
+  ADD_A_E(op)    { op.ADD_A_R(op, op.register_E);             return 4; };
+  ADD_A_H(op)    { op.ADD_A_R(op, op.register_H);             return 4; };
+  ADD_A_L(op)    { op.ADD_A_R(op, op.register_L);             return 4; };
+  ADD_A_PHL(op)  { op.ADD_A_R(op, op.memory[op.register_HL]); return 8; };
+  ADD_A_D8(op, n){ op.ADD_A_R(op, op.memory[n]);              return 8; };
 
   
   /* Additions with carry */
@@ -297,15 +289,15 @@ class Z80{
     this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
   };
   
-  ADC_A_A(op){ op.ADC_A_R(op, op.register_A); };
-  ADC_A_B(op){ op.ADC_A_R(op, op.register_B); };
-  ADC_A_C(op){ op.ADC_A_R(op, op.register_C); };
-  ADC_A_D(op){ op.ADC_A_R(op, op.register_D); };
-  ADC_A_E(op){ op.ADC_A_R(op, op.register_E); };
-  ADC_A_H(op){ op.ADC_A_R(op, op.register_H); };
-  ADC_A_L(op){ op.ADC_A_R(op, op.register_L); };
-  ADC_A_PHL(op){ op.ADC_A_R(op, op.memory[op.register_HL]); };
-  ADC_A_D8(op, n){ op.ADC_A_R(op, op.memory[n]); };
+  ADC_A_A(op)    { op.ADC_A_R(op, op.register_A);             return 4; };
+  ADC_A_B(op)    { op.ADC_A_R(op, op.register_B);             return 4; };
+  ADC_A_C(op)    { op.ADC_A_R(op, op.register_C);             return 4; };
+  ADC_A_D(op)    { op.ADC_A_R(op, op.register_D);             return 4; };
+  ADC_A_E(op)    { op.ADC_A_R(op, op.register_E);             return 4; };
+  ADC_A_H(op)    { op.ADC_A_R(op, op.register_H);             return 4; };
+  ADC_A_L(op)    { op.ADC_A_R(op, op.register_L);             return 4; };
+  ADC_A_PHL(op)  { op.ADC_A_R(op, op.memory[op.register_HL]); return 8; };
+  ADC_A_D8(op, n){ op.ADC_A_R(op, op.memory[n]);              return 8; };
   
 
   /* CPL (Complement A Register) */
@@ -420,90 +412,96 @@ class Z80{
   LD_L_L(op){ op.register_L = op.register_L; };
 
   /* LD register, d8 */
-  LD_A_D8(op, d8){ op.register_A = d8; };
-  LD_B_D8(op, d8){ op.register_B = d8; };
-  LD_C_D8(op, d8){ op.register_C = d8; };
-  LD_D_D8(op, d8){ op.register_D = d8; };
-  LD_E_D8(op, d8){ op.register_E = d8; };
-  LD_H_D8(op, d8){ op.register_H = d8; };
-  LD_L_D8(op, d8){ op.register_L = d8; };
-  LD_PHL_D8(op, d8){ op.memory[op.register_HL] = d8; };
+  LD_A_D8(op, d8)  { op.register_A = d8;             return 8; };
+  LD_B_D8(op, d8)  { op.register_B = d8;             return 8; };
+  LD_C_D8(op, d8)  { op.register_C = d8;             return 8; };
+  LD_D_D8(op, d8)  { op.register_D = d8;             return 8; };
+  LD_E_D8(op, d8)  { op.register_E = d8;             return 8; };
+  LD_H_D8(op, d8)  { op.register_H = d8;             return 8; };
+  LD_L_D8(op, d8)  { op.register_L = d8;             return 8; };
+  LD_PHL_D8(op, d8){ op.memory[op.register_HL] = d8; return 12; };
 
   /* LD register (HL) */
-  LD_A_HL(op){ op.register_A = op.memory[op.register_HL]; };
-  LD_B_HL(op){ op.register_B = op.memory[op.register_HL]; };
-  LD_C_HL(op){ op.register_C = op.memory[op.register_HL]; };
-  LD_D_HL(op){ op.register_D = op.memory[op.register_HL]; };
-  LD_E_HL(op){ op.register_E = op.memory[op.register_HL]; };
-  LD_H_HL(op){ op.register_H = op.memory[op.register_HL]; };
-  LD_L_HL(op){ op.register_L = op.memory[op.register_HL]; };
+  LD_A_HL(op){ op.register_A = op.memory[op.register_HL]; return 8; };
+  LD_B_HL(op){ op.register_B = op.memory[op.register_HL]; return 8; };
+  LD_C_HL(op){ op.register_C = op.memory[op.register_HL]; return 8; };
+  LD_D_HL(op){ op.register_D = op.memory[op.register_HL]; return 8; };
+  LD_E_HL(op){ op.register_E = op.memory[op.register_HL]; return 8; };
+  LD_H_HL(op){ op.register_H = op.memory[op.register_HL]; return 8; };
+  LD_L_HL(op){ op.register_L = op.memory[op.register_HL]; return 8; };
 
   /* LD (HL) register */
-  LD_PHL_A(op){ op.memory[op.register_HL] = op.register_A; };
-  LD_PHL_B(op){ op.memory[op.register_HL] = op.register_B; };
-  LD_PHL_C(op){ op.memory[op.register_HL] = op.register_C; };
-  LD_PHL_D(op){ op.memory[op.register_HL] = op.register_D; };
-  LD_PHL_E(op){ op.memory[op.register_HL] = op.register_E; };
-  LD_PHL_H(op){ op.memory[op.register_HL] = op.register_H; };
-  LD_PHL_L(op){ op.memory[op.register_HL] = op.register_L; };
+  LD_PHL_A(op){ op.memory[op.register_HL] = op.register_A; return 8; };
+  LD_PHL_B(op){ op.memory[op.register_HL] = op.register_B; return 8; };
+  LD_PHL_C(op){ op.memory[op.register_HL] = op.register_C; return 8; };
+  LD_PHL_D(op){ op.memory[op.register_HL] = op.register_D; return 8; };
+  LD_PHL_E(op){ op.memory[op.register_HL] = op.register_E; return 8; };
+  LD_PHL_H(op){ op.memory[op.register_HL] = op.register_H; return 8; };
+  LD_PHL_L(op){ op.memory[op.register_HL] = op.register_L; return 8; };
 
   /* LDH n = register_a [Vice-versa]*/
-  LDH_A_D8(op, n){ op.memory[0xFF00 | n] = op.register_A; };
-  LDH_A_D8(op, n){ op.register_A = op.memory[0xFF00 | n]; };
+  LDH_A_D8(op, n){ op.memory[0xFF00 | n] = op.register_A; return 12; };
+  LDH_A_D8(op, n){ op.register_A = op.memory[0xFF00 | n]; return 12; };
 
   /* LD A memory[16bits] [Vice-versa] */
-  LD_A_PBC(op){ op.register_A = op.memory[op.register_BC]; };
-  LD_PBC_A(op){ op.memory[op.register_BC] = op.register_A; };
-  LD_A_PDE(op){ op.register_A = op.memory[op.register_DE]; };
-  LD_PDE_A(op){ op.memory[op.register_DE] = op.register_A; };
+  LD_A_PBC(op){ op.register_A = op.memory[op.register_BC]; return 8; };
+  LD_PBC_A(op){ op.memory[op.register_BC] = op.register_A; return 8; };
+  LD_A_PDE(op){ op.register_A = op.memory[op.register_DE]; return 8; };
+  LD_PDE_A(op){ op.memory[op.register_DE] = op.register_A; return 8; };
 
   /* LD A (HL-) (Load and Increment) [Vice-versa] */
   LD_A_IHL(op){
     op.register_A = op.memory[op.register_HL];
     op.register_HL = op.register_HL + 1;
+    return 8;
   };
   LD_IHL_A(op){
     op.memory[op.register_HL] = op.register_A;
     op.register_HL = op.register_HL + 1;
+    return 8;
   };
 
   /* LD A (HL-) (Load and Decrement) [Vice-versa] */
   LD_A_DHL(op){
     op.register_A = op.memory[op.register_HL];
     op.register_HL = op.register_HL - 1;
+    return 8;
   };
   LD_DHL_A(op){
     op.memory[op.register_HL] = op.register_A;
     op.register_HL = op.register_HL - 1;
+    return 8;
   };
 
   /////////// 16 bits instructions (SHORTS) ///////////
   /* LDH A D16 (Load to Hardware Registers) [Vice-versa] */
-  LDH_A_D16(op, d8, d16){ op.register_A = op.memory[0xFF00 | (d8 | (d16 << 0x8))]; };
-  LDH_D16_A(op, d8, d16){ op.memory[0xFF00 | (d8 | (d16 << 0x8))] = op.register_A; };
+  LDH_A_D16(op, d8, d16){ op.register_A = op.memory[0xFF00 | (d8 | (d16 << 0x8))]; return 12; };
+  LDH_D16_A(op, d8, d16){ op.memory[0xFF00 | (d8 | (d16 << 0x8))] = op.register_A; return 12; };
 
   /* LDH A (C) (Load to Hardware Registers) [Vice-versa] */
-  LDH_A_C(op){ op.register_A = op.memory[0xFF00 | op.register_C]; };
-  LDH_C_A(op){ op.memory[0xFF00 | op.register_C] = op.register_A; };
+  LDH_A_C(op){ op.register_A = op.memory[0xFF00 | op.register_C]; return 8; };
+  LDH_C_A(op){ op.memory[0xFF00 | op.register_C] = op.register_A; return 8; };
 
   /* LD short_register short (0 - 8 = d8, 8-16 = d16) */
-  LD_BC_D16(op, d8, d16) { op.register_BC = d8 | (d16 << 0x8); };
-  LD_DE_D16(op, d8, d16) { op.register_DE = d8 | (d16 << 0x8); };
-  LD_HL_D16(op, d8, d16) { op.register_HL = d8 | (d16 << 0x8); };
-  LD_AF_D16(op, d8, d16) { op.register_AF = d8 | (d16 << 0x8); };
+  LD_BC_D16(op, d8, d16) { op.register_BC = d8 | (d16 << 0x8); return 12; };
+  LD_DE_D16(op, d8, d16) { op.register_DE = d8 | (d16 << 0x8); return 12; };
+  LD_HL_D16(op, d8, d16) { op.register_HL = d8 | (d16 << 0x8); return 12; };
+  LD_AF_D16(op, d8, d16) { op.register_AF = d8 | (d16 << 0x8); return 12; };
 
   /* Load to Stack pointer offset*/
   LD_SP_D16(op, n, m){
     op.SP = (m << 0x8) | n;
+    return 12;
   };
   LD_D16_SP(op, d8, d16){
     op.memory[d8] = op.SP >> 8;
     op.memory[d16] = op.SP & 0x8;
+    return 12;
   };
 
   /* Load Hig Memory LD M[0xFF00 | D8] = A [Vice-versa] */
-  LDH_A_D8(op, d8){ op.register_A = op.memory[0xFF00 | d8]; };
-  LDH_D8_A(op, d8){ op.memory[0xFF00 | d8] = op.register_A; };
+  LDH_A_D8(op, d8){ op.register_A = op.memory[0xFF00 | d8]; return 12; };
+  LDH_D8_A(op, d8){ op.memory[0xFF00 | d8] = op.register_A; return 12; };
 
   /* LDHL SP r8 */
   // TODO: Is this right ? this.PC += r8
@@ -515,18 +513,23 @@ class Z80{
     op.half_carry_flag = (effective_address & 0x10) === 0x10;
     op.zero_flag = false;
     op.negative_flag = false;
-  }
-
-  /* SP <- HL */
-  LD_SP_HL(op){
-    op.SP = op.register_HL;
+    return 12;
   };
 
+  /* SP <- HL */
+  LD_SP_HL(op){ op.SP = op.register_HL; return 8; };
+
+  /* PUSH Stack Instructions */
+  PUSH_BC(op){ op.push_stack_short(op.register_BC); return 16; };
+  PUSH_DE(op){ op.push_stack_short(op.register_DE); return 16; };
+  PUSH_HL(op){ op.push_stack_short(op.register_HL); return 16; };
+  PUSH_AF(op){ op.push_stack_short(op.register_AF); return 16; };
+
   /* POP Stack Instructions */
-  POP_BC(op){ op.register_BC = op.pop_stack_short(); };
-  POP_DE(op){ op.register_DE = op.pop_stack_short(); };
-  POP_HL(op){ op.register_HL = op.pop_stack_short(); };
-  POP_AF(op){ op.register_AF = op.pop_stack_short(); };
+  POP_BC(op){ op.register_BC = op.pop_stack_short(); return 12; };
+  POP_DE(op){ op.register_DE = op.pop_stack_short(); return 12; };
+  POP_HL(op){ op.register_HL = op.pop_stack_short(); return 12; };
+  POP_AF(op){ op.register_AF = op.pop_stack_short(); return 12; };
 
   /* Mathematical Instructions */
   // Increments instruction
@@ -536,23 +539,24 @@ class Z80{
     this.half_carry_flag = (value & 0x10) === 0x10;
   };
 
-  INC_A(op){ op.register_A = op.register_A + 1; op.INC_R_FLAGS(op.register_A); };
-  INC_B(op){ op.register_B = op.register_B + 1; op.INC_R_FLAGS(op.register_B); };
-  INC_C(op){ op.register_C = op.register_C + 1; op.INC_R_FLAGS(op.register_C); };
-  INC_D(op){ op.register_D = op.register_D + 1; op.INC_R_FLAGS(op.register_D); };
-  INC_E(op){ op.register_E = op.register_E + 1; op.INC_R_FLAGS(op.register_E); };
-  INC_H(op){ op.register_H = op.register_H + 1; op.INC_R_FLAGS(op.register_H); };
-  INC_L(op){ op.register_L = op.register_L + 1; op.INC_R_FLAGS(op.register_L); };
+  INC_A(op){ op.register_A = op.register_A + 1; op.INC_R_FLAGS(op.register_A); return 4; };
+  INC_B(op){ op.register_B = op.register_B + 1; op.INC_R_FLAGS(op.register_B); return 4; };
+  INC_C(op){ op.register_C = op.register_C + 1; op.INC_R_FLAGS(op.register_C); return 4; };
+  INC_D(op){ op.register_D = op.register_D + 1; op.INC_R_FLAGS(op.register_D); return 4; };
+  INC_E(op){ op.register_E = op.register_E + 1; op.INC_R_FLAGS(op.register_E); return 4; };
+  INC_H(op){ op.register_H = op.register_H + 1; op.INC_R_FLAGS(op.register_H); return 4; };
+  INC_L(op){ op.register_L = op.register_L + 1; op.INC_R_FLAGS(op.register_L); return 4; };
   INC_PHL(op){
     op.memory[op.register_HL] = op.memory[op.register_HL] + 1;
     INC_R_FLAGS(op.memory[op.register_HL]);
+    return 12;
   };
 
   // Increments Short
-  INC_BC(op){ op.register_BC = op.register_BC + 1; };
-  INC_DE(op){ op.register_DE = op.register_DE + 1; };
-  INC_HL(op){ op.register_HL = op.register_HL + 1; };
-  INC_SP(op){ op.register_SP = op.register_SP + 1; };
+  INC_BC(op){ op.register_BC = op.register_BC + 1; return 8; };
+  INC_DE(op){ op.register_DE = op.register_DE + 1; return 8; };
+  INC_HL(op){ op.register_HL = op.register_HL + 1; return 8; };
+  INC_SP(op){ op.register_SP = op.register_SP + 1; return 8; };
 
   // Decrement instruction
   DEC_R_FLAGS(value){
@@ -589,14 +593,14 @@ class Z80{
     this.half_carry_flag = true;
   };
 
-  AND_A(op){ op.AND_R(op.register_A); };
-  AND_B(op){ op.AND_R(op.register_B); };
-  AND_C(op){ op.AND_R(op.register_C); };
-  AND_D(op){ op.AND_R(op.register_D); };
-  AND_E(op){ op.AND_R(op.register_E); };
-  AND_H(op){ op.AND_R(op.register_H); };
-  AND_L(op){ op.AND_R(op.register_L); };
-  AND_PHL(op){ op.AND_R(op.memory[op.register_HL]); };
+  AND_A(op){ op.AND_R(op.register_A); return 4; };
+  AND_B(op){ op.AND_R(op.register_B); return 4; };
+  AND_C(op){ op.AND_R(op.register_C); return 4; };
+  AND_D(op){ op.AND_R(op.register_D); return 4; };
+  AND_E(op){ op.AND_R(op.register_E); return 4; };
+  AND_H(op){ op.AND_R(op.register_H); return 4; };
+  AND_L(op){ op.AND_R(op.register_L); return 8; };
+  AND_PHL(op){ op.AND_R(op.memory[op.register_HL]); return 8; };
 
   // OR (A <- A | R)  
   OR_R(op, r1){
@@ -607,14 +611,14 @@ class Z80{
     this.half_carry_flag = false;
   };
 
-  OR_A(op){ op.OR_R(op.register_A); };
-  OR_B(op){ op.OR_R(op.register_B); };
-  OR_C(op){ op.OR_R(op.register_C); };
-  OR_D(op){ op.OR_R(op.register_D); };
-  OR_E(op){ op.OR_R(op.register_E); };
-  OR_H(op){ op.OR_R(op.register_H); };
-  OR_L(op){ op.OR_R(op.register_L); };
-  OR_PHL(op){ op.OR_R(op.memory[op.register_HL]); };
+  OR_A(op){ op.OR_R(op.register_A); return 4; };
+  OR_B(op){ op.OR_R(op.register_B); return 4; };
+  OR_C(op){ op.OR_R(op.register_C); return 4; };
+  OR_D(op){ op.OR_R(op.register_D); return 4; };
+  OR_E(op){ op.OR_R(op.register_E); return 4; };
+  OR_H(op){ op.OR_R(op.register_H); return 4; };
+  OR_L(op){ op.OR_R(op.register_L); return 8; };
+  OR_PHL(op){ op.OR_R(op.memory[op.register_HL]); return 8;  };
 
   // XOR (A <- R ^ A)
   XOR_R(r1){
@@ -625,17 +629,42 @@ class Z80{
     this.half_carry_flag = false;
   };
 
-  XOR_A(op){ op.XOR_R(op.register_A); };
-  XOR_B(op){ op.XOR_R(op.register_B); };
-  XOR_C(op){ op.XOR_R(op.register_C); };
-  XOR_D(op){ op.XOR_R(op.register_D); };
-  XOR_D(op){ op.XOR_R(op.register_D); };
-  XOR_E(op){ op.XOR_R(op.register_E); };
-  XOR_H(op){ op.XOR_R(op.register_H); };
-  XOR_L(op){ op.XOR_R(op.register_L); };
-  XOR_PHL(op){ op.XOR_R(op.memory[op.register_HL]); };
-  XOR_D8(op, n){ op.XOR_R(op.memory[n]); };
+  XOR_A(op){ op.XOR_R(op.register_A); return 4; };
+  XOR_B(op){ op.XOR_R(op.register_B); return 4; };
+  XOR_C(op){ op.XOR_R(op.register_C); return 4; };
+  XOR_D(op){ op.XOR_R(op.register_D); return 4; };
+  XOR_D(op){ op.XOR_R(op.register_D); return 4; };
+  XOR_E(op){ op.XOR_R(op.register_E); return 4; };
+  XOR_H(op){ op.XOR_R(op.register_H); return 4; };
+  XOR_L(op){ op.XOR_R(op.register_L); return 4; };
+  XOR_PHL(op){ op.XOR_R(op.memory[op.register_HL]); return 8; };
+  XOR_D8(op, n){ op.XOR_R(op.memory[n]); return 8; };
 
+  /* Return Instruction */
+  RET(op){
+    this.PC = this.pop_stack_short();
+    return 8;
+  };
+  RETI(op){ // TODO: Enables Interrups 
+    this.PC = this.pop_stack_short();
+    return 8;
+  };
+  RET_NZ(op){ 
+    if(!op.zero_flag) { op.RET(); }
+    return 8;
+  };
+  RET_NC(op){
+    if(!op.carry_flag){ op.RET(); }
+    return 8;
+  };
+  RET_Z(op){
+    if(op.zero_flag)  { op.RET(); }
+    return 8;
+  };
+  RET_C(op){
+    if(op.carry_flag) { op.RET(); }
+    return 8;
+  };
 
   /* JUMP Instructions */
   // Jump to NN
@@ -714,7 +743,7 @@ class Z80{
     console.log(1);
     let offset_next_instruction = op.PC + 3;
     op.push_stack_short(offset_next_instruction);
-    op.PC = (d8 | (d16 << 8)) - 3; // Subtract 2
+    op.PC = (d8 | (d16 << 8)); // Subtract 2
   };
 
   // ------------ PREFIX - SECOND LEVEL TABLE --------------
@@ -729,14 +758,14 @@ class Z80{
     return rt;
   };
 
-  RL_A(op, bc){ op.register_A = op.RL_R(op.register_A); };
-  RL_B(op, bc){ op.register_B = op.RL_R(op.register_B); };
-  RL_C(op, bc){ op.register_C = op.RL_R(op.register_C); };
-  RL_D(op, bc){ op.register_D = op.RL_R(op.register_D); };
-  RL_E(op, bc){ op.register_E = op.RL_R(op.register_E); };
-  RL_H(op, bc){ op.register_H = op.RL_R(op.register_H); };
-  RL_L(op, bc){ op.register_L = op.RL_R(op.register_L); };
-  RL_PHL(op, bc){ op.register_PHL = op.RL_R(op.memory[op.register_HL]); };
+  RL_A(op, bc){ op.register_A = op.RL_R(op.register_A); return 8; };
+  RL_B(op, bc){ op.register_B = op.RL_R(op.register_B); return 8; };
+  RL_C(op, bc){ op.register_C = op.RL_R(op.register_C); return 8; };
+  RL_D(op, bc){ op.register_D = op.RL_R(op.register_D); return 8; };
+  RL_E(op, bc){ op.register_E = op.RL_R(op.register_E); return 8; };
+  RL_H(op, bc){ op.register_H = op.RL_R(op.register_H); return 8; };
+  RL_L(op, bc){ op.register_L = op.RL_R(op.register_L); return 8; };
+  RL_PHL(op, bc){ op.register_PHL = op.RL_R(op.memory[op.register_HL]); return 16; };
   
   // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = cf, cf = a0)
   RR_R(r1){
@@ -749,14 +778,18 @@ class Z80{
     return rt;
   };
 
-  RR_A(op, bc){ op.register_A = op.RR_R(op.register_A); };
-  RR_B(op, bc){ op.register_B = op.RR_R(op.register_B); };
-  RR_C(op, bc){ op.register_C = op.RR_R(op.register_C); };
-  RR_D(op, bc){ op.register_D = op.RR_R(op.register_D); };
-  RR_E(op, bc){ op.register_E = op.RR_R(op.register_E); };
-  RR_H(op, bc){ op.register_H = op.RR_R(op.register_H); };
-  RR_L(op, bc){ op.register_L = op.RR_R(op.register_L); };
-  RR_PHL(op, bc){ op.register_PHL = op.RR_R(op.memory[op.register_HL]); };
+  RR_A(op, bc){ op.register_A = op.RR_R(op.register_A); return 8; };
+  RR_B(op, bc){ op.register_B = op.RR_R(op.register_B); return 8; };
+  RR_C(op, bc){ op.register_C = op.RR_R(op.register_C); return 8; };
+  RR_D(op, bc){ op.register_D = op.RR_R(op.register_D); return 8; };
+  RR_E(op, bc){ op.register_E = op.RR_R(op.register_E); return 8; };
+  RR_H(op, bc){ op.register_H = op.RR_R(op.register_H); return 8; };
+  RR_L(op, bc){ op.register_L = op.RR_R(op.register_L); return 8; };
+  RR_PHL(op, bc){ op.register_PHL = op.RR_R(op.memory[op.register_HL]); return 16; };
+
+  
+  // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = cf, cf = a0)
+  RLA(op){ throw "Unimplemented Instruction"; };
 
   // Rotation Left Circular (hi = a7, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
   RLC_R(r1){
@@ -770,14 +803,14 @@ class Z80{
     return rt;
   };
 
-  RLC_A(op, bc){ op.register_A = op.RLC_R(op.register_A); };
-  RLC_B(op, bc){ op.register_B = op.RLC_R(op.register_B); };
-  RLC_C(op, bc){ op.register_C = op.RLC_R(op.register_C); };
-  RLC_D(op, bc){ op.register_D = op.RLC_R(op.register_D); };
-  RLC_E(op, bc){ op.register_E = op.RLC_R(op.register_E); };
-  RLC_H(op, bc){ op.register_H = op.RLC_R(op.register_H); };
-  RLC_L(op, bc){ op.register_L = op.RLC_R(op.register_L); };
-  RLC_PHL(op, bc){ op.register_PHL = op.RLC_R(op.memory[op.register_HL]); };
+  RLC_A(op, bc){ op.register_A = op.RLC_R(op.register_A); return 8; };
+  RLC_B(op, bc){ op.register_B = op.RLC_R(op.register_B); return 8; };
+  RLC_C(op, bc){ op.register_C = op.RLC_R(op.register_C); return 8; };
+  RLC_D(op, bc){ op.register_D = op.RLC_R(op.register_D); return 8; };
+  RLC_E(op, bc){ op.register_E = op.RLC_R(op.register_E); return 8; };
+  RLC_H(op, bc){ op.register_H = op.RLC_R(op.register_H); return 8; };
+  RLC_L(op, bc){ op.register_L = op.RLC_R(op.register_L); return 8; };
+  RLC_PHL(op, bc){ op.register_PHL = op.RLC_R(op.memory[op.register_HL]); return 16; };
 
   // Rotation Right Circular (hi = a7 a6 a5 a4 a3 a2 a1, lo = a0, cf = a0)
   RRC_R(r1){
@@ -791,14 +824,14 @@ class Z80{
     return rt;
   };
 
-  RRC_A(op, bc){ op.register_A = op.RRC_R(op.register_A); };
-  RRC_B(op, bc){ op.register_B = op.RRC_R(op.register_B); };
-  RRC_C(op, bc){ op.register_C = op.RRC_R(op.register_C); };
-  RRC_D(op, bc){ op.register_D = op.RRC_R(op.register_D); };
-  RRC_E(op, bc){ op.register_E = op.RRC_R(op.register_E); };
-  RRC_H(op, bc){ op.register_H = op.RRC_R(op.register_H); };
-  RRC_L(op, bc){ op.register_L = op.RRC_R(op.register_L); };
-  RRC_PHL(op, bc){ op.register_PHL = op.RRC_R(op.memory[op.register_HL]); };
+  RRC_A(op, bc){ op.register_A = op.RRC_R(op.register_A); return 8; };
+  RRC_B(op, bc){ op.register_B = op.RRC_R(op.register_B); return 8; };
+  RRC_C(op, bc){ op.register_C = op.RRC_R(op.register_C); return 8; };
+  RRC_D(op, bc){ op.register_D = op.RRC_R(op.register_D); return 8; };
+  RRC_E(op, bc){ op.register_E = op.RRC_R(op.register_E); return 8; };
+  RRC_H(op, bc){ op.register_H = op.RRC_R(op.register_H); return 8; };
+  RRC_L(op, bc){ op.register_L = op.RRC_R(op.register_L); return 8; };
+  RRC_PHL(op, bc){ op.register_PHL = op.RRC_R(op.memory[op.register_HL]); return 16; };
 
   // Swap halves of register
   SWAP_R(r1){
@@ -812,14 +845,14 @@ class Z80{
     return result;
   };
 
-  SWAP_A(op, bc){ this.register_A = op.SWAP_R(this.register_A); };
-  SWAP_B(op, bc){ this.register_B = op.SWAP_R(this.register_B); };
-  SWAP_C(op, bc){ this.register_C = op.SWAP_R(this.register_C); };
-  SWAP_D(op, bc){ this.register_D = op.SWAP_R(this.register_D); };
-  SWAP_E(op, bc){ this.register_E = op.SWAP_R(this.register_E); };
-  SWAP_H(op, bc){ this.register_H = op.SWAP_R(this.register_H); };
-  SWAP_L(op, bc){ this.register_L = op.SWAP_R(this.register_L); };
-  SWAP_PHL(op, bc){ this.register_PHL = op.SWAP_R(this.register_PHL); };
+  SWAP_A(op, bc){ this.register_A = op.SWAP_R(this.register_A); return 8; };
+  SWAP_B(op, bc){ this.register_B = op.SWAP_R(this.register_B); return 8; };
+  SWAP_C(op, bc){ this.register_C = op.SWAP_R(this.register_C); return 8; };
+  SWAP_D(op, bc){ this.register_D = op.SWAP_R(this.register_D); return 8; };
+  SWAP_E(op, bc){ this.register_E = op.SWAP_R(this.register_E); return 8; };
+  SWAP_H(op, bc){ this.register_H = op.SWAP_R(this.register_H); return 8; };
+  SWAP_L(op, bc){ this.register_L = op.SWAP_R(this.register_L); return 8; };
+  SWAP_PHL(op, bc){ this.register_PHL = op.SWAP_R(this.register_PHL); return 16; };
 
   // Check nth-bit from register A, and set it accumulator bit on/off
   BIT_K_N(k, r1){
@@ -828,223 +861,223 @@ class Z80{
     this.half_carry_flag = true;
   };
 
-  BIT_0_A(op, bc){ op.BIT_K_N(0, op.register_A); };
-  BIT_0_B(op, bc){ op.BIT_K_N(0, op.register_B); };
-  BIT_0_C(op, bc){ op.BIT_K_N(0, op.register_C); };
-  BIT_0_D(op, bc){ op.BIT_K_N(0, op.register_D); };
-  BIT_0_E(op, bc){ op.BIT_K_N(0, op.register_E); };
-  BIT_0_H(op, bc){ op.BIT_K_N(0, op.register_H); };
-  BIT_0_L(op, bc){ op.BIT_K_N(0, op.register_L); };
-  BIT_0_PHL(op, bc){ op.BIT_K_N(0, op.memory[ op.register_HL]); };
+  BIT_0_A(op, bc){ op.BIT_K_N(0, op.register_A); return 8; };
+  BIT_0_B(op, bc){ op.BIT_K_N(0, op.register_B); return 8; };
+  BIT_0_C(op, bc){ op.BIT_K_N(0, op.register_C); return 8; };
+  BIT_0_D(op, bc){ op.BIT_K_N(0, op.register_D); return 8; };
+  BIT_0_E(op, bc){ op.BIT_K_N(0, op.register_E); return 8; };
+  BIT_0_H(op, bc){ op.BIT_K_N(0, op.register_H); return 8; };
+  BIT_0_L(op, bc){ op.BIT_K_N(0, op.register_L); return 8; };
+  BIT_0_PHL(op, bc){ op.BIT_K_N(0, op.memory[ op.register_HL]); return 16; };
   
-  BIT_1_A(op, bc){ op.BIT_K_N(1, op.register_A); };
-  BIT_1_B(op, bc){ op.BIT_K_N(1, op.register_B); };
-  BIT_1_C(op, bc){ op.BIT_K_N(1, op.register_C); };
-  BIT_1_D(op, bc){ op.BIT_K_N(1, op.register_D); };
-  BIT_1_E(op, bc){ op.BIT_K_N(1, op.register_E); };
-  BIT_1_H(op, bc){ op.BIT_K_N(1, op.register_H); };
-  BIT_1_L(op, bc){ op.BIT_K_N(1, op.register_L); };
-  BIT_1_PHL(op, bc){ op.BIT_K_N(1, op.memory[op.register_HL]); };
+  BIT_1_A(op, bc){ op.BIT_K_N(1, op.register_A); return 8; };
+  BIT_1_B(op, bc){ op.BIT_K_N(1, op.register_B); return 8; };
+  BIT_1_C(op, bc){ op.BIT_K_N(1, op.register_C); return 8; };
+  BIT_1_D(op, bc){ op.BIT_K_N(1, op.register_D); return 8; };
+  BIT_1_E(op, bc){ op.BIT_K_N(1, op.register_E); return 8; };
+  BIT_1_H(op, bc){ op.BIT_K_N(1, op.register_H); return 8; };
+  BIT_1_L(op, bc){ op.BIT_K_N(1, op.register_L); return 8; };
+  BIT_1_PHL(op, bc){ op.BIT_K_N(1, op.memory[op.register_HL]); return 16; };
 
-  BIT_2_A(op, bc)  { op.BIT_K_N(2, op.register_A); };
-  BIT_2_B(op, bc)  { op.BIT_K_N(2, op.register_B); };
-  BIT_2_C(op, bc)  { op.BIT_K_N(2, op.register_C); };
-  BIT_2_D(op, bc)  { op.BIT_K_N(2, op.register_D); };
-  BIT_2_E(op, bc)  { op.BIT_K_N(2, op.register_E); };
-  BIT_2_H(op, bc)  { op.BIT_K_N(2, op.register_H); };
-  BIT_2_L(op, bc)  { op.BIT_K_N(2, op.register_L); };
-  BIT_2_PHL(op, bc){ op.BIT_K_N(2, op.memory[op.register_HL]); };
+  BIT_2_A(op, bc)  { op.BIT_K_N(2, op.register_A); return 8; };
+  BIT_2_B(op, bc)  { op.BIT_K_N(2, op.register_B); return 8; };
+  BIT_2_C(op, bc)  { op.BIT_K_N(2, op.register_C); return 8; };
+  BIT_2_D(op, bc)  { op.BIT_K_N(2, op.register_D); return 8; };
+  BIT_2_E(op, bc)  { op.BIT_K_N(2, op.register_E); return 8; };
+  BIT_2_H(op, bc)  { op.BIT_K_N(2, op.register_H); return 8; };
+  BIT_2_L(op, bc)  { op.BIT_K_N(2, op.register_L); return 8; };
+  BIT_2_PHL(op, bc){ op.BIT_K_N(2, op.memory[op.register_HL]); return 16; };
 
-  BIT_3_A(op, bc)  { op.BIT_K_N(3, op.register_A); };
-  BIT_3_B(op, bc)  { op.BIT_K_N(3, op.register_B); };
-  BIT_3_C(op, bc)  { op.BIT_K_N(3, op.register_C); };
-  BIT_3_D(op, bc)  { op.BIT_K_N(3, op.register_D); };
-  BIT_3_E(op, bc)  { op.BIT_K_N(3, op.register_E); };
-  BIT_3_H(op, bc)  { op.BIT_K_N(3, op.register_H); };
-  BIT_3_L(op, bc)  { op.BIT_K_N(3, op.register_L); };
-  BIT_3_PHL(op, bc){ op.BIT_K_N(3, op.memory[op.register_HL]); };
+  BIT_3_A(op, bc)  { op.BIT_K_N(3, op.register_A); return 8; };
+  BIT_3_B(op, bc)  { op.BIT_K_N(3, op.register_B); return 8; };
+  BIT_3_C(op, bc)  { op.BIT_K_N(3, op.register_C); return 8; };
+  BIT_3_D(op, bc)  { op.BIT_K_N(3, op.register_D); return 8; };
+  BIT_3_E(op, bc)  { op.BIT_K_N(3, op.register_E); return 8; };
+  BIT_3_H(op, bc)  { op.BIT_K_N(3, op.register_H); return 8; };
+  BIT_3_L(op, bc)  { op.BIT_K_N(3, op.register_L); return 8; };
+  BIT_3_PHL(op, bc){ op.BIT_K_N(3, op.memory[op.register_HL]); return 16; };
 
-  BIT_4_A(op, bc)  { op.BIT_K_N(4, op.register_A); };
-  BIT_4_B(op, bc)  { op.BIT_K_N(4, op.register_B); };
-  BIT_4_C(op, bc)  { op.BIT_K_N(4, op.register_C); };
-  BIT_4_D(op, bc)  { op.BIT_K_N(4, op.register_D); };
-  BIT_4_E(op, bc)  { op.BIT_K_N(4, op.register_E); };
-  BIT_4_H(op, bc)  { op.BIT_K_N(4, op.register_H); };
-  BIT_4_L(op, bc)  { op.BIT_K_N(4, op.register_L); };
-  BIT_4_PHL(op, bc){ op.BIT_K_N(4, op.memory[op.register_HL]); };
+  BIT_4_A(op, bc)  { op.BIT_K_N(4, op.register_A); return 8; };
+  BIT_4_B(op, bc)  { op.BIT_K_N(4, op.register_B); return 8; };
+  BIT_4_C(op, bc)  { op.BIT_K_N(4, op.register_C); return 8; };
+  BIT_4_D(op, bc)  { op.BIT_K_N(4, op.register_D); return 8; };
+  BIT_4_E(op, bc)  { op.BIT_K_N(4, op.register_E); return 8; };
+  BIT_4_H(op, bc)  { op.BIT_K_N(4, op.register_H); return 8; };
+  BIT_4_L(op, bc)  { op.BIT_K_N(4, op.register_L); return 8; };
+  BIT_4_PHL(op, bc){ op.BIT_K_N(4, op.memory[op.register_HL]); return 16; };
 
-  BIT_5_A(op, bc)  { op.BIT_K_N(5, op.register_A); };
-  BIT_5_B(op, bc)  { op.BIT_K_N(5, op.register_B); };
-  BIT_5_C(op, bc)  { op.BIT_K_N(5, op.register_C); };
-  BIT_5_D(op, bc)  { op.BIT_K_N(5, op.register_D); };
-  BIT_5_E(op, bc)  { op.BIT_K_N(5, op.register_E); };
-  BIT_5_H(op, bc)  { op.BIT_K_N(5, op.register_H); };
-  BIT_5_L(op, bc)  { op.BIT_K_N(5, op.register_L); };
-  BIT_5_PHL(op, bc){ op.BIT_K_N(5, op.memory[op.register_HL]); };
+  BIT_5_A(op, bc)  { op.BIT_K_N(5, op.register_A); return 8; };
+  BIT_5_B(op, bc)  { op.BIT_K_N(5, op.register_B); return 8; };
+  BIT_5_C(op, bc)  { op.BIT_K_N(5, op.register_C); return 8; };
+  BIT_5_D(op, bc)  { op.BIT_K_N(5, op.register_D); return 8; };
+  BIT_5_E(op, bc)  { op.BIT_K_N(5, op.register_E); return 8; };
+  BIT_5_H(op, bc)  { op.BIT_K_N(5, op.register_H); return 8; };
+  BIT_5_L(op, bc)  { op.BIT_K_N(5, op.register_L); return 8; };
+  BIT_5_PHL(op, bc){ op.BIT_K_N(5, op.memory[op.register_HL]); return 16; };
 
-  BIT_6_A(op, bc)  { op.BIT_K_N(6, op.register_A); };
-  BIT_6_B(op, bc)  { op.BIT_K_N(6, op.register_B); };
-  BIT_6_C(op, bc)  { op.BIT_K_N(6, op.register_C); };
-  BIT_6_D(op, bc)  { op.BIT_K_N(6, op.register_D); };
-  BIT_6_E(op, bc)  { op.BIT_K_N(6, op.register_E); };
-  BIT_6_H(op, bc)  { op.BIT_K_N(6, op.register_H); };
-  BIT_6_L(op, bc)  { op.BIT_K_N(6, op.register_L); };
-  BIT_6_PHL(op, bc){ op.BIT_K_N(6, op.memory[op.register_HL]); };
+  BIT_6_A(op, bc)  { op.BIT_K_N(6, op.register_A); return 8; };
+  BIT_6_B(op, bc)  { op.BIT_K_N(6, op.register_B); return 8; };
+  BIT_6_C(op, bc)  { op.BIT_K_N(6, op.register_C); return 8; };
+  BIT_6_D(op, bc)  { op.BIT_K_N(6, op.register_D); return 8; };
+  BIT_6_E(op, bc)  { op.BIT_K_N(6, op.register_E); return 8; };
+  BIT_6_H(op, bc)  { op.BIT_K_N(6, op.register_H); return 8; };
+  BIT_6_L(op, bc)  { op.BIT_K_N(6, op.register_L); return 8; };
+  BIT_6_PHL(op, bc){ op.BIT_K_N(6, op.memory[op.register_HL]); return 16; };
 
-  BIT_7_A(op, bc)  { op.BIT_K_N(7, op.register_A); };
-  BIT_7_B(op, bc)  { op.BIT_K_N(7, op.register_B); };
-  BIT_7_C(op, bc)  { op.BIT_K_N(7, op.register_C); };
-  BIT_7_D(op, bc)  { op.BIT_K_N(7, op.register_D); };
-  BIT_7_E(op, bc)  { op.BIT_K_N(7, op.register_E); };
-  BIT_7_H(op, bc)  { op.BIT_K_N(7, op.register_H); };
-  BIT_7_L(op, bc)  { op.BIT_K_N(7, op.register_L); };
-  BIT_7_PHL(op, bc){ op.BIT_K_N(7, op.memory[op.register_HL]); };
+  BIT_7_A(op, bc)  { op.BIT_K_N(7, op.register_A); return 8; };
+  BIT_7_B(op, bc)  { op.BIT_K_N(7, op.register_B); return 8; };
+  BIT_7_C(op, bc)  { op.BIT_K_N(7, op.register_C); return 8; };
+  BIT_7_D(op, bc)  { op.BIT_K_N(7, op.register_D); return 8; };
+  BIT_7_E(op, bc)  { op.BIT_K_N(7, op.register_E); return 8; };
+  BIT_7_H(op, bc)  { op.BIT_K_N(7, op.register_H); return 8; };
+  BIT_7_L(op, bc)  { op.BIT_K_N(7, op.register_L); return 8; };
+  BIT_7_PHL(op, bc){ op.BIT_K_N(7, op.memory[op.register_HL]); return 16; };
 
   // Set bit B in register R
-  SET_0_A(){ this.register_A |= (0x1 << 0); };
-  SET_1_A(){ this.register_A |= (0x1 << 1); };
-  SET_2_A(){ this.register_A |= (0x1 << 2); };
-  SET_3_A(){ this.register_A |= (0x1 << 3); };
-  SET_4_A(){ this.register_A |= (0x1 << 4); };
-  SET_5_A(){ this.register_A |= (0x1 << 5); };
-  SET_6_A(){ this.register_A |= (0x1 << 6); };
-  SET_7_A(){ this.register_A |= (0x1 << 7); };
+  SET_0_A(){ this.register_A |= (0x1 << 0); return 8; };
+  SET_0_B(){ this.register_B |= (0x1 << 0); return 8; };
+  SET_0_C(){ this.register_C |= (0x1 << 0); return 8; };
+  SET_0_D(){ this.register_D |= (0x1 << 0); return 8; };
+  SET_0_E(){ this.register_E |= (0x1 << 0); return 8; };
+  SET_0_H(){ this.register_H |= (0x1 << 0); return 8; };
+  SET_0_L(){ this.register_L |= (0x1 << 0); return 8; };
+  SET_0_PHL(){ this.register_PHL |= (0x1 << 0); return 16; };
 
-  SET_0_B(){ this.register_B |= (0x1 << 0); };
-  SET_1_B(){ this.register_B |= (0x1 << 1); };
-  SET_2_B(){ this.register_B |= (0x1 << 2); };
-  SET_3_B(){ this.register_B |= (0x1 << 3); };
-  SET_4_B(){ this.register_B |= (0x1 << 4); };
-  SET_5_B(){ this.register_B |= (0x1 << 5); };
-  SET_6_B(){ this.register_B |= (0x1 << 6); };
-  SET_7_B(){ this.register_B |= (0x1 << 7); };
+  SET_1_A(){ this.register_A |= (0x1 << 1); return 8; };
+  SET_1_B(){ this.register_B |= (0x1 << 1); return 8; };
+  SET_1_C(){ this.register_C |= (0x1 << 1); return 8; };
+  SET_1_D(){ this.register_D |= (0x1 << 1); return 8; };
+  SET_1_E(){ this.register_E |= (0x1 << 1); return 8; };
+  SET_1_H(){ this.register_H |= (0x1 << 1); return 8; };
+  SET_1_L(){ this.register_L |= (0x1 << 1); return 8; };
+  SET_1_PHL(){ this.register_PHL |= (0x1 << 1); return 16; };
 
-  SET_0_C(){ this.register_C |= (0x1 << 0); };
-  SET_1_C(){ this.register_C |= (0x1 << 1); };
-  SET_2_C(){ this.register_C |= (0x1 << 2); };
-  SET_3_C(){ this.register_C |= (0x1 << 3); };
-  SET_4_C(){ this.register_C |= (0x1 << 4); };
-  SET_5_C(){ this.register_C |= (0x1 << 5); };
-  SET_6_C(){ this.register_C |= (0x1 << 6); };
-  SET_7_C(){ this.register_C |= (0x1 << 7); };
+  SET_2_A(){ this.register_A |= (0x1 << 2); return 8; };
+  SET_2_B(){ this.register_B |= (0x1 << 2); return 8; };
+  SET_2_C(){ this.register_C |= (0x1 << 2); return 8; };
+  SET_2_D(){ this.register_D |= (0x1 << 2); return 8; };
+  SET_2_E(){ this.register_E |= (0x1 << 2); return 8; };
+  SET_2_H(){ this.register_H |= (0x1 << 2); return 8; };
+  SET_2_L(){ this.register_L |= (0x1 << 2); return 8; };
+  SET_2_PHL(){ this.register_PHL |= (0x1 << 2); return 16; };
 
-  SET_0_D(){ this.register_D |= (0x1 << 0); };
-  SET_1_D(){ this.register_D |= (0x1 << 1); };
-  SET_2_D(){ this.register_D |= (0x1 << 2); };
-  SET_3_D(){ this.register_D |= (0x1 << 3); };
-  SET_4_D(){ this.register_D |= (0x1 << 4); };
-  SET_5_D(){ this.register_D |= (0x1 << 5); };
-  SET_6_D(){ this.register_D |= (0x1 << 6); };
-  SET_7_D(){ this.register_D |= (0x1 << 7); };
+  SET_3_A(){ this.register_A |= (0x1 << 3); return 8; };
+  SET_3_B(){ this.register_B |= (0x1 << 3); return 8; };
+  SET_3_C(){ this.register_C |= (0x1 << 3); return 8; };
+  SET_3_D(){ this.register_D |= (0x1 << 3); return 8; };
+  SET_3_E(){ this.register_E |= (0x1 << 3); return 8; };
+  SET_3_H(){ this.register_H |= (0x1 << 3); return 8; };
+  SET_3_L(){ this.register_L |= (0x1 << 3); return 8; };
+  SET_3_PHL(){ this.register_PHL |= (0x1 << 3); return 16; };
 
-  SET_0_E(){ this.register_E |= (0x1 << 0); };
-  SET_1_E(){ this.register_E |= (0x1 << 1); };
-  SET_2_E(){ this.register_E |= (0x1 << 2); };
-  SET_3_E(){ this.register_E |= (0x1 << 3); };
-  SET_4_E(){ this.register_E |= (0x1 << 4); };
-  SET_5_E(){ this.register_E |= (0x1 << 5); };
-  SET_6_E(){ this.register_E |= (0x1 << 6); };
-  SET_7_E(){ this.register_E |= (0x1 << 7); };
+  SET_4_A(){ this.register_A |= (0x1 << 4); return 8; };
+  SET_4_B(){ this.register_B |= (0x1 << 4); return 8; };
+  SET_4_C(){ this.register_C |= (0x1 << 4); return 8; };
+  SET_4_D(){ this.register_D |= (0x1 << 4); return 8; };
+  SET_4_E(){ this.register_E |= (0x1 << 4); return 8; };
+  SET_4_H(){ this.register_H |= (0x1 << 4); return 8; };
+  SET_4_L(){ this.register_L |= (0x1 << 4); return 8; };
+  SET_4_PHL(){ this.register_PHL |= (0x1 << 4); return 16; };
 
-  SET_0_H(){ this.register_H |= (0x1 << 0); };
-  SET_1_H(){ this.register_H |= (0x1 << 1); };
-  SET_2_H(){ this.register_H |= (0x1 << 2); };
-  SET_3_H(){ this.register_H |= (0x1 << 3); };
-  SET_4_H(){ this.register_H |= (0x1 << 4); };
-  SET_5_H(){ this.register_H |= (0x1 << 5); };
-  SET_6_H(){ this.register_H |= (0x1 << 6); };
-  SET_7_H(){ this.register_H |= (0x1 << 7); };
+  SET_5_A(){ this.register_A |= (0x1 << 5); return 8; };
+  SET_5_B(){ this.register_B |= (0x1 << 5); return 8; };
+  SET_5_C(){ this.register_C |= (0x1 << 5); return 8; };
+  SET_5_D(){ this.register_D |= (0x1 << 5); return 8; };
+  SET_5_E(){ this.register_E |= (0x1 << 5); return 8; };
+  SET_5_H(){ this.register_H |= (0x1 << 5); return 8; };
+  SET_5_L(){ this.register_L |= (0x1 << 5); return 8; };
+  SET_5_PHL(){ this.register_PHL |= (0x1 << 5); return 16; };
 
-  SET_0_L(){ this.register_L |= (0x1 << 0); };
-  SET_1_L(){ this.register_L |= (0x1 << 1); };
-  SET_2_L(){ this.register_L |= (0x1 << 2); };
-  SET_3_L(){ this.register_L |= (0x1 << 3); };
-  SET_4_L(){ this.register_L |= (0x1 << 4); };
-  SET_5_L(){ this.register_L |= (0x1 << 5); };
-  SET_6_L(){ this.register_L |= (0x1 << 6); };
-  SET_7_L(){ this.register_L |= (0x1 << 7); };
+  SET_6_A(){ this.register_A |= (0x1 << 6); return 8; };
+  SET_6_B(){ this.register_B |= (0x1 << 6); return 8; };
+  SET_6_C(){ this.register_C |= (0x1 << 6); return 8; };
+  SET_6_D(){ this.register_D |= (0x1 << 6); return 8; };
+  SET_6_E(){ this.register_E |= (0x1 << 6); return 8; };
+  SET_6_H(){ this.register_H |= (0x1 << 6); return 8; };
+  SET_6_L(){ this.register_L |= (0x1 << 6); return 8; };
+  SET_6_PHL(){ this.register_PHL |= (0x1 << 6); return 16; };
 
-  SET_0_PHL(){ this.register_PHL |= (0x1 << 0); };
-  SET_1_PHL(){ this.register_PHL |= (0x1 << 1); };
-  SET_2_PHL(){ this.register_PHL |= (0x1 << 2); };
-  SET_3_PHL(){ this.register_PHL |= (0x1 << 3); };
-  SET_4_PHL(){ this.register_PHL |= (0x1 << 4); };
-  SET_5_PHL(){ this.register_PHL |= (0x1 << 5); };
-  SET_6_PHL(){ this.register_PHL |= (0x1 << 6); };
-  SET_7_PHL(){ this.register_PHL |= (0x1 << 7); };
+  SET_7_A(){ this.register_A |= (0x1 << 7); return 8; };
+  SET_7_B(){ this.register_B |= (0x1 << 7); return 8; };
+  SET_7_C(){ this.register_C |= (0x1 << 7); return 8; };
+  SET_7_D(){ this.register_D |= (0x1 << 7); return 8; };
+  SET_7_E(){ this.register_E |= (0x1 << 7); return 8; };
+  SET_7_H(){ this.register_H |= (0x1 << 7); return 8; };
+  SET_7_L(){ this.register_L |= (0x1 << 7); return 8; };
+  SET_7_PHL(){ this.register_PHL |= (0x1 << 7); return 16; };
 
   // Unset bit B in register R
-  RES_0_A(){ this.register_A &= ~(0x1 << 0); };
-  RES_1_A(){ this.register_A &= ~(0x1 << 1); };
-  RES_2_A(){ this.register_A &= ~(0x1 << 2); };
-  RES_3_A(){ this.register_A &= ~(0x1 << 3); };
-  RES_4_A(){ this.register_A &= ~(0x1 << 4); };
-  RES_5_A(){ this.register_A &= ~(0x1 << 5); };
-  RES_6_A(){ this.register_A &= ~(0x1 << 6); };
-  RES_7_A(){ this.register_A &= ~(0x1 << 7); };
+  RES_0_A(){ this.register_A &= ~(0x1 << 0); return 8; };
+  RES_0_B(){ this.register_B &= ~(0x1 << 0); return 8; };
+  RES_0_C(){ this.register_C &= ~(0x1 << 0); return 8; };
+  RES_0_D(){ this.register_D &= ~(0x1 << 0); return 8; };
+  RES_0_E(){ this.register_E &= ~(0x1 << 0); return 8; };
+  RES_0_H(){ this.register_H &= ~(0x1 << 0); return 8; };
+  RES_0_L(){ this.register_L &= ~(0x1 << 0); return 8; };
+  RES_0_PHL(){ this.register_PHL &= ~(0x1 << 0); return 16; };
 
-  RES_0_B(){ this.register_B &= ~(0x1 << 0); };
-  RES_1_B(){ this.register_B &= ~(0x1 << 1); };
-  RES_2_B(){ this.register_B &= ~(0x1 << 2); };
-  RES_3_B(){ this.register_B &= ~(0x1 << 3); };
-  RES_4_B(){ this.register_B &= ~(0x1 << 4); };
-  RES_5_B(){ this.register_B &= ~(0x1 << 5); };
-  RES_6_B(){ this.register_B &= ~(0x1 << 6); };
-  RES_7_B(){ this.register_B &= ~(0x1 << 7); };
+  RES_1_A(){ this.register_A &= ~(0x1 << 1); return 8; };
+  RES_1_B(){ this.register_B &= ~(0x1 << 1); return 8; };
+  RES_1_C(){ this.register_C &= ~(0x1 << 1); return 8; };
+  RES_1_D(){ this.register_D &= ~(0x1 << 1); return 8; };
+  RES_1_E(){ this.register_E &= ~(0x1 << 1); return 8; };
+  RES_1_H(){ this.register_H &= ~(0x1 << 1); return 8; };
+  RES_1_L(){ this.register_L &= ~(0x1 << 1); return 8; };
+  RES_1_PHL(){ this.register_PHL &= ~(0x1 << 1); return 16; };
 
-  RES_0_C(){ this.register_C &= ~(0x1 << 0); };
-  RES_1_C(){ this.register_C &= ~(0x1 << 1); };
-  RES_2_C(){ this.register_C &= ~(0x1 << 2); };
-  RES_3_C(){ this.register_C &= ~(0x1 << 3); };
-  RES_4_C(){ this.register_C &= ~(0x1 << 4); };
-  RES_5_C(){ this.register_C &= ~(0x1 << 5); };
-  RES_6_C(){ this.register_C &= ~(0x1 << 6); };
-  RES_7_C(){ this.register_C &= ~(0x1 << 7); };
+  RES_2_A(){ this.register_A &= ~(0x1 << 2); return 8; };
+  RES_2_B(){ this.register_B &= ~(0x1 << 2); return 8; };
+  RES_2_C(){ this.register_C &= ~(0x1 << 2); return 8; };
+  RES_2_D(){ this.register_D &= ~(0x1 << 2); return 8; };
+  RES_2_E(){ this.register_E &= ~(0x1 << 2); return 8; };
+  RES_2_H(){ this.register_H &= ~(0x1 << 2); return 8; };
+  RES_2_L(){ this.register_L &= ~(0x1 << 2); return 8; };
+  RES_2_PHL(){ this.register_PHL &= ~(0x1 << 2); return 16; };
 
-  RES_0_D(){ this.register_D &= ~(0x1 << 0); };
-  RES_1_D(){ this.register_D &= ~(0x1 << 1); };
-  RES_2_D(){ this.register_D &= ~(0x1 << 2); };
-  RES_3_D(){ this.register_D &= ~(0x1 << 3); };
-  RES_4_D(){ this.register_D &= ~(0x1 << 4); };
-  RES_5_D(){ this.register_D &= ~(0x1 << 5); };
-  RES_6_D(){ this.register_D &= ~(0x1 << 6); };
-  RES_7_D(){ this.register_D &= ~(0x1 << 7); };
+  RES_3_A(){ this.register_A &= ~(0x1 << 3); return 8; };
+  RES_3_B(){ this.register_B &= ~(0x1 << 3); return 8; };
+  RES_3_C(){ this.register_C &= ~(0x1 << 3); return 8; };
+  RES_3_D(){ this.register_D &= ~(0x1 << 3); return 8; };
+  RES_3_E(){ this.register_E &= ~(0x1 << 3); return 8; };
+  RES_3_H(){ this.register_H &= ~(0x1 << 3); return 8; };
+  RES_3_L(){ this.register_L &= ~(0x1 << 3); return 8; };
+  RES_3_PHL(){ this.register_PHL &= ~(0x1 << 3); return 16; };
 
-  RES_0_E(){ this.register_E &= ~(0x1 << 0); };
-  RES_1_E(){ this.register_E &= ~(0x1 << 1); };
-  RES_2_E(){ this.register_E &= ~(0x1 << 2); };
-  RES_3_E(){ this.register_E &= ~(0x1 << 3); };
-  RES_4_E(){ this.register_E &= ~(0x1 << 4); };
-  RES_5_E(){ this.register_E &= ~(0x1 << 5); };
-  RES_6_E(){ this.register_E &= ~(0x1 << 6); };
-  RES_7_E(){ this.register_E &= ~(0x1 << 7); };
+  RES_4_A(){ this.register_A &= ~(0x1 << 4); return 8; };
+  RES_4_B(){ this.register_B &= ~(0x1 << 4); return 8; };
+  RES_4_C(){ this.register_C &= ~(0x1 << 4); return 8; };
+  RES_4_D(){ this.register_D &= ~(0x1 << 4); return 8; };
+  RES_4_E(){ this.register_E &= ~(0x1 << 4); return 8; };
+  RES_4_H(){ this.register_H &= ~(0x1 << 4); return 8; };
+  RES_4_L(){ this.register_L &= ~(0x1 << 4); return 8; };
+  RES_4_PHL(){ this.register_PHL &= ~(0x1 << 4); return 16; };
 
-  RES_0_H(){ this.register_H &= ~(0x1 << 0); };
-  RES_1_H(){ this.register_H &= ~(0x1 << 1); };
-  RES_2_H(){ this.register_H &= ~(0x1 << 2); };
-  RES_3_H(){ this.register_H &= ~(0x1 << 3); };
-  RES_4_H(){ this.register_H &= ~(0x1 << 4); };
-  RES_5_H(){ this.register_H &= ~(0x1 << 5); };
-  RES_6_H(){ this.register_H &= ~(0x1 << 6); };
-  RES_7_H(){ this.register_H &= ~(0x1 << 7); };
+  RES_5_A(){ this.register_A &= ~(0x1 << 5); return 8; };
+  RES_5_B(){ this.register_B &= ~(0x1 << 5); return 8; };
+  RES_5_C(){ this.register_C &= ~(0x1 << 5); return 8; };
+  RES_5_D(){ this.register_D &= ~(0x1 << 5); return 8; };
+  RES_5_E(){ this.register_E &= ~(0x1 << 5); return 8; };
+  RES_5_H(){ this.register_H &= ~(0x1 << 5); return 8; };
+  RES_5_L(){ this.register_L &= ~(0x1 << 5); return 8; };
+  RES_5_PHL(){ this.register_PHL &= ~(0x1 << 5); return 16; };
 
-  RES_0_L(){ this.register_L &= ~(0x1 << 0); };
-  RES_1_L(){ this.register_L &= ~(0x1 << 1); };
-  RES_2_L(){ this.register_L &= ~(0x1 << 2); };
-  RES_3_L(){ this.register_L &= ~(0x1 << 3); };
-  RES_4_L(){ this.register_L &= ~(0x1 << 4); };
-  RES_5_L(){ this.register_L &= ~(0x1 << 5); };
-  RES_6_L(){ this.register_L &= ~(0x1 << 6); };
-  RES_7_L(){ this.register_L &= ~(0x1 << 7); };
+  RES_6_A(){ this.register_A &= ~(0x1 << 6); return 8; };
+  RES_6_B(){ this.register_B &= ~(0x1 << 6); return 8; };
+  RES_6_C(){ this.register_C &= ~(0x1 << 6); return 8; };
+  RES_6_D(){ this.register_D &= ~(0x1 << 6); return 8; };
+  RES_6_E(){ this.register_E &= ~(0x1 << 6); return 8; };
+  RES_6_H(){ this.register_H &= ~(0x1 << 6); return 8; };
+  RES_6_L(){ this.register_L &= ~(0x1 << 6); return 8; };
+  RES_6_PHL(){ this.register_PHL &= ~(0x1 << 6); return 16; };
 
-  RES_0_PHL(){ this.register_PHL &= ~(0x1 << 0); };
-  RES_1_PHL(){ this.register_PHL &= ~(0x1 << 1); };
-  RES_2_PHL(){ this.register_PHL &= ~(0x1 << 2); };
-  RES_3_PHL(){ this.register_PHL &= ~(0x1 << 3); };
-  RES_4_PHL(){ this.register_PHL &= ~(0x1 << 4); };
-  RES_5_PHL(){ this.register_PHL &= ~(0x1 << 5); };
-  RES_6_PHL(){ this.register_PHL &= ~(0x1 << 6); };
-  RES_7_PHL(){ this.register_PHL &= ~(0x1 << 7); };
+  RES_7_A(){ this.register_A &= ~(0x1 << 7); return 8; };
+  RES_7_B(){ this.register_B &= ~(0x1 << 7); return 8; };
+  RES_7_C(){ this.register_C &= ~(0x1 << 7); return 8; };
+  RES_7_D(){ this.register_D &= ~(0x1 << 7); return 8; };
+  RES_7_E(){ this.register_E &= ~(0x1 << 7); return 8; };
+  RES_7_H(){ this.register_H &= ~(0x1 << 7); return 8; };
+  RES_7_L(){ this.register_L &= ~(0x1 << 7); return 8; };
+  RES_7_PHL(){ this.register_PHL &= ~(0x1 << 7); return 16; };
 
   /* Illegal GB Color TODO: Maybe in the future? */
   // 8 bits illegal instructions
@@ -1086,11 +1119,11 @@ class Z80{
     let instruction = instruction_obj.instruction;
     instruction(this, ...new Array(instruction.length - 1).fill(1).map((a, b) => this.memory[this.PC + b + 1]));
     
-    if(this.is_jump_instruction(instruction)){
-      this.PC += instruction_obj.length;
+    if(!this.is_long_jump_instruction(instruction_obj.hexadecimal)){
+      this.PC += instruction.length;
     }
 
-    this.cycles += instruction_obj.length;
-    return instruction_obj;
+    this.cycles += instruction.length;
+    return instruction;
   };
 };

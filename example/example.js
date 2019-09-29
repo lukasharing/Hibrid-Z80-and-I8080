@@ -12,12 +12,15 @@ const visualize = _ => {
 
   /* Visualize Instruction */
   // Create Table [offset | Opcode | value]
-  let i = 0;
+  let instruction_printable = 0;
   let instruction_table = [];
-  while(i < num_instruction){
-    let instruction = processor.fetch_instruction(pc);
+  while(instruction_printable < num_instruction){
+    let instruction_obj = processor.fetch_instruction(pc);
+    let instruction = instruction_obj.instruction;
+    
+
     let full_instruction = 0;
-    for(let k = 0; k < instruction.length && !isFinite(instruction); ++k){
+    for(let k = 0; k < instruction.length; ++k){
       full_instruction |= processor.memory[pc + k] << (k << 3);
     }
 
@@ -31,19 +34,21 @@ const visualize = _ => {
     replacement = replacement.replace(/ DHL/g, " (HL-)");
     replacement = replacement.replace(/ IHL/g, " (HL+)");
 
-    instruction_table[i++] = {
+    instruction_table[instruction_printable++] = {
       offset: pc,
       opcode: replacement,
       value: full_instruction
     };
 
     pc += instruction.length;
+    
+    if(processor.is_return_instruction(instruction_obj.hexadecimal)) break;
   }
 
   let html = "";
   // Iterate Over table
   let number_jumps = 0;
-  for(let i = 0; i < num_instruction; ++i){
+  for(let i = 0; i < instruction_printable; ++i){
     let cell = instruction_table[i];
     let offset = parseInt(cell.offset);
     
@@ -60,7 +65,7 @@ const visualize = _ => {
       // Arrow Calculations
       let direction = jump_offset < offset;
       // Clamping
-      height_jump = (height_jump < 0 && !direction ? num_instruction : height_jump) + (height_jump < 0) * (direction - 0.5);
+      height_jump = (height_jump < 0 && !direction ? instruction_printable : height_jump) + (height_jump < 0) * (direction - 0.5);
       let bar_size = Math.abs(height_jump - i) * 30;
       jump_html = `<div class="arrow-jump jump-${direction ? "top" : "bottom"}" style="width: ${++number_jumps * 6}px; height: ${bar_size}px; top: ${-direction * bar_size + 15}px;"></div>`;
     }
@@ -70,6 +75,11 @@ const visualize = _ => {
               <div class="opcode">${ hex(cell.value & 0xFF, 2) }</div>
               <div class="instruction">${ cell.opcode }</div>
             </div>`;
+  }
+
+  // Adding Padding
+  for(let i = instruction_printable; i < num_instruction; ++i){
+    html +=`<div class="row row-padding"></div>`;
   }
 
   viewer.innerHTML = html;
@@ -133,7 +143,7 @@ const step = steps => {
     processor.cycle();
     visualize(processor);
   //}catch(e){
-    console.error(e.message);
+  //console.error(e.message);
   //}
 };
 
