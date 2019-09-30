@@ -96,8 +96,8 @@ class Z80{
       i.OR_B    , i.OR_C     , i.OR_D     , i.OR_E    , i.OR_H       , i.OR_L    , i.OR_PHL   , i.OR_A    , i.CP_B      , i.CP_C     , i.CP_D     , i.CP_E   , i.CP_H      , i.CP_L    , i.CP_PHL   , i.CP_A   ,
       i.RET_NZ  , i.POP_BC   , i.JP_NZ_D16, i.JP_D16  , i.CALL_NZ_D16, i.PUSH_BC , i.ADD_A_D8 , i.RST_00H , i.RET_Z     , i.RET      , i.JP_Z_D16 , 0xCB     , i.CALL_Z_D16, i.CALL_D16, i.ADC_A_D8 , i.RST_08H,
       i.RET_NC  , i.POP_DE   , i.JP_NC_D16, 0xD3      , i.CALL_NC_D16, i.PUSH_DE , i.SUB_D8   , i.RST_10H , i.RET_C     , i.RETI     , i.JP_C_D16 , 0xDB     , i.CALL_C_D16, 0xDD      , i.SBC_A_D8 , i.RST_18H,
-      i.LDH_A_D8, i.POP_HL   , i.LDH_C_A  , 0xE3      , 0xE4         , i.PUSH_HL , i.AND_D8   , i.RST_20H , i.ADD_SP_R8 , i.JP_HL    , i.LDH_D16_A, 0xEB     , 0xEC        , 0xED      , i.XOR_D8   , i.RST_28H,
-      i.LDH_D8_A, i.POP_AF   , i.LDH_A_C  , i.DI      , 0xF4         , i.PUSH_AF , i.OR_D8    , i.RST_30H , i.LDHL_SP_HL, i.LD_SP_HL , i.LDH_A_D16, i.EI     , 0xFC        , 0xFD      , i.CP_D8    , i.RST_38H,
+      i.LDH_D8_A, i.POP_HL   , i.LDH_C_A  , 0xE3      , 0xE4         , i.PUSH_HL , i.AND_D8   , i.RST_20H , i.ADD_SP_R8 , i.JP_HL    , i.LDH_D16_A, 0xEB     , 0xEC        , 0xED      , i.XOR_D8   , i.RST_28H,
+      i.LDH_A_D8, i.POP_AF   , i.LDH_A_C  , i.DI      , 0xF4         , i.PUSH_AF , i.OR_D8    , i.RST_30H , i.LDHL_SP_HL, i.LD_SP_HL , i.LDH_A_D16, i.EI     , 0xFC        , 0xFD      , i.CP_D8    , i.RST_38H,
     );
 
     // Second level instruction table (0xCB ~ Prexif)
@@ -151,8 +151,6 @@ class Z80{
   SBC_PHL(op, r1){ throw "Unimplemented Instruction"; return 8; };
   SBC_A(op, r1){ throw "Unimplemented Instruction"; return 4; };
 
-  
-  RLCA(op){ throw "Unimplemented Instruction"; };
   DAA(op){ throw "Unimplemented Instruction"; };
 
   // ------------ INSTRUCTIONS ----------------------------
@@ -240,8 +238,8 @@ class Z80{
   push_stack_byte(byte){ this.memory[this.SP] = byte; this.SP -= 1; };
   push_stack_short(short){  this.push_stack_byte(short & 0xFF);  this.push_stack_byte(short >> 8); }; 
 
-  pop_stack_byte(){ this.SP += 1; return this.memory[this.SP + 1]; };
-  pop_stack_short(){ this.SP += 2; return ((this.memory[this.SP + 2] << 8) | this.memory[this.SP + 1]); };
+  pop_stack_byte(){ this.SP += 1; return this.memory[this.SP]; };
+  pop_stack_short(){ return (this.pop_stack_byte() << 8) | this.pop_stack_byte(); };
 
   // ------------ INSTRUCTIONS ---------------------
 
@@ -310,9 +308,9 @@ class Z80{
   /* CP Compare A r (Eq A - r) */
   CP_R(r1){
     this.zero_flag       = this.register_A == r1;
-    this.carry_flag      = !this.zero_flag;
+    this.negative_flag   = true;
+    this.carry_flag      = this.register_A < r1;
     this.half_carry_flag = (((this.register_A & 0x10) - (r1 & 0x10)) & 0x10) === 0x10;
-    this.negative_flag   = 1;
   };
 
   CP_A(op)    { op.CP_R(op.register_A); };
@@ -439,9 +437,10 @@ class Z80{
   LD_PHL_H(op){ op.memory[op.register_HL] = op.register_H; return 8; };
   LD_PHL_L(op){ op.memory[op.register_HL] = op.register_L; return 8; };
 
-  /* LDH n = register_a [Vice-versa]*/
-  LDH_A_D8(op, n){ op.memory[0xFF00 | n] = op.register_A; return 12; };
-  LDH_A_D8(op, n){ op.register_A = op.memory[0xFF00 | n]; return 12; };
+
+  /* Load Hig Memory LD M[0xFF00 | D8] = A [Vice-versa] */
+  LDH_A_D8(op, d8){ op.register_A = op.memory[0xFF00 | d8]; return 12; };
+  LDH_D8_A(op, d8){ op.memory[0xFF00 | d8] = op.register_A; return 12; };
 
   /* LD A memory[16bits] [Vice-versa] */
   LD_A_PBC(op){ op.register_A = op.memory[op.register_BC]; return 8; };
@@ -499,9 +498,6 @@ class Z80{
     return 12;
   };
 
-  /* Load Hig Memory LD M[0xFF00 | D8] = A [Vice-versa] */
-  LDH_A_D8(op, d8){ op.register_A = op.memory[0xFF00 | d8]; return 12; };
-  LDH_D8_A(op, d8){ op.memory[0xFF00 | d8] = op.register_A; return 12; };
 
   /* LDHL SP r8 */
   // TODO: Is this right ? this.PC += r8
@@ -642,11 +638,11 @@ class Z80{
 
   /* Return Instruction */
   RET(op){
-    this.PC = this.pop_stack_short();
+    op.PC = op.pop_stack_short() - 1;
     return 8;
   };
   RETI(op){ // TODO: Enables Interrups 
-    this.PC = this.pop_stack_short();
+    op.PC = op.pop_stack_short() - 1;
     return 8;
   };
   RET_NZ(op){ 
@@ -740,7 +736,6 @@ class Z80{
 
   /* CALL */
   CALL_D16(op, d8, d16){
-    console.log(1);
     let offset_next_instruction = op.PC + 3;
     op.push_stack_short(offset_next_instruction);
     op.PC = (d8 | (d16 << 8)); // Subtract 2
@@ -767,11 +762,14 @@ class Z80{
   RL_L(op, bc){ op.register_L = op.RL_R(op.register_L); return 8; };
   RL_PHL(op, bc){ op.register_PHL = op.RL_R(op.memory[op.register_HL]); return 16; };
   
-  // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = cf, cf = a0)
+  // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = a0, cf = a0)
+  // https://ez80.readthedocs.io/en/latest/docs/bit-shifts/rr.html
   RR_R(r1){
     let lo = r1 & 0x1;
     let hi = r1 >> 1;
     let rt = (lo << (BITS_ADDRESS - 1)) | this.carry_flag;
+
+    this.zero_flag       = rt === 0;
     this.negative_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = lo;
@@ -788,14 +786,41 @@ class Z80{
   RR_PHL(op, bc){ op.register_PHL = op.RR_R(op.memory[op.register_HL]); return 16; };
 
   
-  // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = cf, cf = a0)
-  RLA(op){ throw "Unimplemented Instruction"; };
+  // Rotation Left through Carry Flag (hi = a7, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
+  // https://ez80.readthedocs.io/en/latest/docs/bit-shifts/rla.html
+  RLA(op){
+    let lo = op.register_A & ((1 << (BITS_ADDRESS - 1)) - 1);
+    let hi = op.register_A >> (BITS_ADDRESS - 1);
+    let rt = (lo << 1) | op.carry_flag;
+
+    op.register_A      = rt;
+    op.zero_flag       = rt === 0;
+    op.negative_flag   = false;
+    op.half_carry_flag = false;
+    op.carry_flag      = lo;
+  };
+
+  // Rotation Left through Carry Flag (hi = a6 a5 a4 a3 a2 a1 a0, lo = cf, cf = a7)
+  // https://ez80.readthedocs.io/en/latest/docs/bit-shifts/rlca.html
+  RLCA(op){
+    let lo = op.register_A & ((1 << (BITS_ADDRESS - 1)) - 1);
+    let hi = op.register_A >> (BITS_ADDRESS - 1);
+    let rt = (lo << 1) | hi;
+
+    op.register_A      = rt;
+    op.zero_flag       = rt === 0;
+    op.negative_flag   = false;
+    op.half_carry_flag = false;
+    op.carry_flag      = lo;
+  };
 
   // Rotation Left Circular (hi = a7, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
+  // https://ez80.readthedocs.io/en/latest/docs/bit-shifts/rlc.html
   RLC_R(r1){
     let lo = r1 & ((1 << (BITS_ADDRESS - 1)) - 1);
     let hi = r1 >> (BITS_ADDRESS - 1);
     let rt = hi | (lo << 1);
+    
     this.zero_flag       = rt === 0;
     this.negative_flag   = false;
     this.half_carry_flag = false;

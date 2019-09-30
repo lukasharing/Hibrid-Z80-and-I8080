@@ -86,11 +86,11 @@ const visualize = _ => {
 
   /* Visualize Instructions */
   // 8 bits Registers
-  const bits_8 = document.querySelector("#registers > .tab_container > .table:first-child > .table_container > .row");
+  const bits_8 = document.querySelector("#byte_register > .table_container > .row");
   processor.register_8bits.forEach((e, i) => bits_8.children[i].innerHTML = hex(e, 2));
 
   // 16 bits Registers
-  const bits_16 = document.querySelector("#registers > .tab_container > .table:last-child > .table_container > .row");
+  const bits_16 = document.querySelector("#short_register > .table_container > .row");
 
   bits_16.children[0].innerHTML = hex(processor.register_BC, 4);
   bits_16.children[1].innerHTML = hex(processor.register_DE, 4);
@@ -98,6 +98,17 @@ const visualize = _ => {
   bits_16.children[3].innerHTML = hex(processor.register_AF, 4);
   bits_16.children[4].innerHTML = hex(processor.register_PC, 4);
   bits_16.children[5].innerHTML = hex(processor.register_SP, 4);
+
+  // F - Bits 
+  const bits_1 = document.querySelector("#bits_register > .table_container > .row");
+  bits_1.children[7].innerHTML = 'X';
+  bits_1.children[6].innerHTML = 'X';
+  bits_1.children[5].innerHTML = 'X';
+  bits_1.children[4].innerHTML = 'X';
+  bits_1.children[3].innerHTML = processor.carry_flag;
+  bits_1.children[2].innerHTML = processor.half_carry_flag;
+  bits_1.children[1].innerHTML = processor.negative_flag;
+  bits_1.children[0].innerHTML = processor.zero_flag;
 
   // Set Table Values
   const table_html = document.getElementById("hex-values");
@@ -124,6 +135,8 @@ const visualize = _ => {
 
   let stack_offset = Math.max(0xFF80, processor.SP);
   let stack_offset_visible = Math.min(0xFFFE - size_stack, stack_offset);
+
+  document.getElementById("stack-offset").innerHTML = `(${hex(processor.SP, 4)})`;
 
   // We should look one after (i + 1).
   for(let i = 0; i < size_stack; ++i){
@@ -175,18 +188,16 @@ document.getElementById("file-loader").onchange = function(){
   reader.readAsArrayBuffer(this.files[0]);
 };
 
-document.querySelectorAll("#registers > .tabs > div").forEach(e => {
-  e.addEventListener("click", function(){
-    document.querySelector("#registers > .tabs > div.selected").classList.remove("selected");
+document.querySelectorAll(".multitab").forEach(e => {
+  
+  e.querySelectorAll(".tabs > div").forEach(a => {
+    a.addEventListener("click", function(){
+    e.querySelector(".tabs > div.selected").classList.remove("selected");
     this.classList.add("selected");
 
     const index = Array.from(this.parentNode.children).indexOf(this);
-    document.querySelector("#registers > .tab_container > .hide").classList.remove("hide");
-    Array.from(document.querySelector("#registers > .tab_container").children).forEach((e, i) => {
-      if(index != i){
-        e.classList.add("hide")
-      }
-    });
-
-  });
+    e.querySelector(".tab_container > div:not(.hide)").classList.add("hide");
+    e.querySelector(".tab_container").children[index].classList.remove("hide");
+    })
+  })
 });

@@ -33,9 +33,10 @@
           <div class="tabs">
             <div class="selected">Byte</div>
             <div>Short</div>
+            <div>Flags</div>
           </div>
           <div class="tab_container">
-            <div class="table">
+            <div class="table" id="byte_register">
               <div class="header">
                 <div>B</div><div>C</div><div>D</div><div>E</div><div>H</div><div>L</div><div>A</div><div>F</div>
               </div>
@@ -45,7 +46,7 @@
                 </div>
               </div>
             </div>
-            <div class="table hide">
+            <div class="table hide" id="short_register">
               <div class="header">
                 <div>BC</div><div>DE</div><div>HL</div><div>AF</div><div>PC</div><div>SP</div>
               </div>
@@ -55,21 +56,43 @@
                 </div>
               </div>
             </div>
+            <div class="table hide" id="bits_register">
+              <div class="header">
+                <div>Z</div><div>N</div><div>H</div><div>C</div><div></div><div></div><div></div><div></div>
+              </div>
+              <div class="table_container">
+                <div class="row">
+                  <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div id="right-viewer" class="table">
-        <div id="header-hex" class="header">
-          <div class="blue-cell">Offset</div>
-          <div>0x0</div><div>0x1</div><div>0x2</div><div>0x3</div><div>0x4</div><div>0x5</div>
-          <div>0x6</div><div>0x7</div><div>0x8</div><div>0x9</div><div>0xA</div><div>0xB</div><div>0xC</div><div>0xD</div><div>0xE</div><div>0xF</div>
+      <div id="right-viewer" class="multitab">
+        <div class="tabs">
+          <div class="selected">Memory</div>
+          <div>Emulator</div>
         </div>
-        <div class="table_container" id="hex-values">
+        <div class="tab_container">
+          <div class="table" id="memory">
+            <div id="header-hex" class="header">
+              <div class="blue-cell">Offset</div>
+              <div>0x0</div><div>0x1</div><div>0x2</div><div>0x3</div><div>0x4</div><div>0x5</div>
+              <div>0x6</div><div>0x7</div><div>0x8</div><div>0x9</div><div>0xA</div><div>0xB</div><div>0xC</div><div>0xD</div><div>0xE</div><div>0xF</div>
+            </div>
+            <div class="table_container" id="hex-values"></div>
+          </div>
+          <div class="table hide" id="emulator">
+            <div id="emulator-container">
+              <canvas id="emulator-cvs" width="160" height="144">Your Navigator doesn't support canvas</canvas>
+            </div>
+          </div>
         </div>
       </div>
       <div id="stack-viewer" class="table">
         <div class="header">
-          <div class="blue-cell">Stack</div>
+          <div class="blue-cell"><span class="text-middle">Stack<span id="stack-offset"></span></span></div>
         </div>
         <div id="stack-values" class="table_container"></div>
       </div>

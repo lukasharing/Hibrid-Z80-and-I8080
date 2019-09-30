@@ -9,6 +9,7 @@ body{
 }
 
 .hide{ display: none !important; }
+.text-middle{ text-align: center; }
 
 /* Globals */
 button{
@@ -295,9 +296,26 @@ input[type="number"]{
   bottom: 0;
 }
 
+/* Screen Emulator */
+#emulator-container{
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#emulator-cvs{
+  background: #222;
+}
+
 /**** Instruction Viewer ****/
+#right-viewer{
+  display: flex;
+  flex: 1;
+}
 
 /**** Hex Viewer *****/
+
 #header-hex{
   height: 50px;
 }
@@ -318,6 +336,16 @@ input[type="number"]{
   display: flex;
   flex-direction: column;
   flex: none !important;
+}
+
+#stack-viewer{
+
+}
+
+#stack-offset{
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
 }
 
 #stack-values{
