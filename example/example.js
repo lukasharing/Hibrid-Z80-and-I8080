@@ -115,6 +115,18 @@ const visualize = _ => {
   const pointer = processor.register_PC & ~0xF;
   let table = "";
   
+  // Draw Map
+  /*
+  let cvs = document.getElementById("emulator-cvs");
+  cvs.width = cvs.height = 256;
+  let ctx = cvs.getContext("2d");
+  let img = ctx.createImageData(256, 256);
+  processor.memory.subarray(0x9800, 0x9C00).forEach((e, i) => {
+    img.data[i * 4 + 0] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = img.data[i * 4 + 3] = e;
+  });
+  ctx.putImageData(img, 0, 0);
+  */
+
   let num_memory_rows = (table_html.parentElement.parentElement.clientHeight - 51) / 30;
   for(let i = 0; i < num_memory_rows; ++i){
     let offset = pointer + i * 16;
@@ -163,6 +175,7 @@ const step = steps => {
 
 const load_assembly = (memory_module) => {
   processor.memory = new Uint16Array(0xFFFF);
+  processor.memory.fill(255);
   processor.memory.set(memory_module, processor.register_PC);
   visualize(processor);
 

@@ -1,3 +1,4 @@
+/* Central Process Unit */
 
 /* Research */
 // https://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM (BIOS)
@@ -125,6 +126,22 @@ class Z80{
     this.return_instruction = [0xC0, 0xC8, 0xC9, 0xD0, 0xD8, 0xD9];
   };
 
+  // MEMORY
+  putMemory(addrs, value){
+
+    // Check if I/O Registers
+    /*if((addrs & 0xFF00) && ((addrs & 0xFF) <= 0xFF4B) || (addrs === 0xFFFF)){
+      IO.execute(addrs & 0xFF);
+    }*/
+
+    this.memory[addrs] = value;
+  };
+
+  readMemory(addrs){
+    return this.memory[addrs];
+  };
+
+
   is_jump_instruction(instruction){ return (this.is_short_jump_instruction(instruction) || this.is_long_jump_instruction(instruction)); };
   is_short_jump_instruction(instruction){ return (this.short_jump_instructions.indexOf(instruction) >= 0) };
   is_long_jump_instruction(instruction){ return (this.long_jump_instruction.indexOf(instruction) >= 0); }
@@ -235,10 +252,10 @@ class Z80{
   set zero_flag(v){ this.register_F = change_bit_position(this.register_F, 7, v); };
 
   // ------------ STACK ----------------------------
-  push_stack_byte(byte){ this.memory[this.SP] = byte; this.SP -= 1; };
+  push_stack_byte(byte){ this.putMemory(this.SP, byte); this.SP -= 1; };
   push_stack_short(short){  this.push_stack_byte(short & 0xFF);  this.push_stack_byte(short >> 8); }; 
 
-  pop_stack_byte(){ this.SP += 1; return this.memory[this.SP]; };
+  pop_stack_byte(){ this.SP += 1; return this.readMemory(this.SP); };
   pop_stack_short(){ return (this.pop_stack_byte() << 8) | this.pop_stack_byte(); };
 
   // ------------ INSTRUCTIONS ---------------------
@@ -274,8 +291,8 @@ class Z80{
   ADD_A_E(op)    { op.ADD_A_R(op, op.register_E);             return 4; };
   ADD_A_H(op)    { op.ADD_A_R(op, op.register_H);             return 4; };
   ADD_A_L(op)    { op.ADD_A_R(op, op.register_L);             return 4; };
-  ADD_A_PHL(op)  { op.ADD_A_R(op, op.memory[op.register_HL]); return 8; };
-  ADD_A_D8(op, n){ op.ADD_A_R(op, op.memory[n]);              return 8; };
+  ADD_A_PHL(op)  { op.ADD_A_R(op, op.readMemory(op.register_HL)); return 8; };
+  ADD_A_D8(op, n){ op.ADD_A_R(op, op.readMemory(n));              return 8; };
 
   
   /* Additions with carry */
@@ -294,8 +311,8 @@ class Z80{
   ADC_A_E(op)    { op.ADC_A_R(op, op.register_E);             return 4; };
   ADC_A_H(op)    { op.ADC_A_R(op, op.register_H);             return 4; };
   ADC_A_L(op)    { op.ADC_A_R(op, op.register_L);             return 4; };
-  ADC_A_PHL(op)  { op.ADC_A_R(op, op.memory[op.register_HL]); return 8; };
-  ADC_A_D8(op, n){ op.ADC_A_R(op, op.memory[n]);              return 8; };
+  ADC_A_PHL(op)  { op.ADC_A_R(op, op.readMemory(op.register_HL)); return 8; };
+  ADC_A_D8(op, n){ op.ADC_A_R(op, op.readMemory(n));              return 8; };
   
 
   /* CPL (Complement A Register) */
@@ -320,8 +337,8 @@ class Z80{
   CP_E(op)    { op.CP_R(op.register_E); };
   CP_H(op)    { op.CP_R(op.register_H); };
   CP_L(op)    { op.CP_R(op.register_L); };
-  CP_PHL(op)  { op.CP_R(op.memory[op.register_HL]); };
-  CP_D8(op, n){ op.CP_R(op.memory[n]); };
+  CP_PHL(op)  { op.CP_R(op.readMemory(op.register_HL)); };
+  CP_D8(op, n){ op.CP_R(op.readMemory(n)); };
 
   /* SCF (Set Carry Flag) */
   SCF(op){
@@ -417,75 +434,75 @@ class Z80{
   LD_E_D8(op, d8)  { op.register_E = d8;             return 8; };
   LD_H_D8(op, d8)  { op.register_H = d8;             return 8; };
   LD_L_D8(op, d8)  { op.register_L = d8;             return 8; };
-  LD_PHL_D8(op, d8){ op.memory[op.register_HL] = d8; return 12; };
+  LD_PHL_D8(op, d8){ op.putMemory(op.register_HL, d8); return 12; };
 
   /* LD register (HL) */
-  LD_A_HL(op){ op.register_A = op.memory[op.register_HL]; return 8; };
-  LD_B_HL(op){ op.register_B = op.memory[op.register_HL]; return 8; };
-  LD_C_HL(op){ op.register_C = op.memory[op.register_HL]; return 8; };
-  LD_D_HL(op){ op.register_D = op.memory[op.register_HL]; return 8; };
-  LD_E_HL(op){ op.register_E = op.memory[op.register_HL]; return 8; };
-  LD_H_HL(op){ op.register_H = op.memory[op.register_HL]; return 8; };
-  LD_L_HL(op){ op.register_L = op.memory[op.register_HL]; return 8; };
+  LD_A_HL(op){ op.register_A = op.readMemory(op.register_HL); return 8; };
+  LD_B_HL(op){ op.register_B = op.readMemory(op.register_HL); return 8; };
+  LD_C_HL(op){ op.register_C = op.readMemory(op.register_HL); return 8; };
+  LD_D_HL(op){ op.register_D = op.readMemory(op.register_HL); return 8; };
+  LD_E_HL(op){ op.register_E = op.readMemory(op.register_HL); return 8; };
+  LD_H_HL(op){ op.register_H = op.readMemory(op.register_HL); return 8; };
+  LD_L_HL(op){ op.register_L = op.readMemory(op.register_HL); return 8; };
 
   /* LD (HL) register */
-  LD_PHL_A(op){ op.memory[op.register_HL] = op.register_A; return 8; };
-  LD_PHL_B(op){ op.memory[op.register_HL] = op.register_B; return 8; };
-  LD_PHL_C(op){ op.memory[op.register_HL] = op.register_C; return 8; };
-  LD_PHL_D(op){ op.memory[op.register_HL] = op.register_D; return 8; };
-  LD_PHL_E(op){ op.memory[op.register_HL] = op.register_E; return 8; };
-  LD_PHL_H(op){ op.memory[op.register_HL] = op.register_H; return 8; };
-  LD_PHL_L(op){ op.memory[op.register_HL] = op.register_L; return 8; };
+  LD_PHL_A(op){ op.putMemory(op.register_HL, op.register_A); return 8; };
+  LD_PHL_B(op){ op.putMemory(op.register_HL, op.register_B); return 8; };
+  LD_PHL_C(op){ op.putMemory(op.register_HL, op.register_C); return 8; };
+  LD_PHL_D(op){ op.putMemory(op.register_HL, op.register_D); return 8; };
+  LD_PHL_E(op){ op.putMemory(op.register_HL, op.register_E); return 8; };
+  LD_PHL_H(op){ op.putMemory(op.register_HL, op.register_H); return 8; };
+  LD_PHL_L(op){ op.putMemory(op.register_HL, op.register_L); return 8; };
 
 
   /* Load Hig Memory LD M[0xFF00 | D8] = A [Vice-versa] */
-  LDH_A_D8(op, d8){ op.register_A = op.memory[0xFF00 | d8]; return 12; };
-  LDH_D8_A(op, d8){ op.memory[0xFF00 | d8] = op.register_A; return 12; };
+  LDH_A_D8(op, d8){ op.register_A = op.readMemory(0xFF00 | d8); return 12; };
+  LDH_D8_A(op, d8){ op.putMemory(0xFF00 | d8, op.register_A); return 12; };
 
   /* LD A memory[16bits] [Vice-versa] */
-  LD_A_PBC(op){ op.register_A = op.memory[op.register_BC]; return 8; };
-  LD_PBC_A(op){ op.memory[op.register_BC] = op.register_A; return 8; };
-  LD_A_PDE(op){ op.register_A = op.memory[op.register_DE]; return 8; };
-  LD_PDE_A(op){ op.memory[op.register_DE] = op.register_A; return 8; };
+  LD_A_PBC(op){ op.register_A = op.readMemory(op.register_BC); return 8; };
+  LD_PBC_A(op){ op.putMemory(op.register_BC, op.register_A); return 8; };
+  LD_A_PDE(op){ op.register_A = op.readMemory(op.register_DE); return 8; };
+  LD_PDE_A(op){ op.putMemory(op.register_DE, op.register_A); return 8; };
 
   /* LD A (HL-) (Load and Increment) [Vice-versa] */
   LD_A_IHL(op){
-    op.register_A = op.memory[op.register_HL];
+    op.register_A = op.readMemory(op.register_HL);
     op.register_HL = op.register_HL + 1;
     return 8;
   };
   LD_IHL_A(op){
-    op.memory[op.register_HL] = op.register_A;
+    op.putMemory(op.register_HL, op.register_A);
     op.register_HL = op.register_HL + 1;
     return 8;
   };
 
   /* LD A (HL-) (Load and Decrement) [Vice-versa] */
   LD_A_DHL(op){
-    op.register_A = op.memory[op.register_HL];
+    op.register_A = op.readMemory(op.register_HL);
     op.register_HL = op.register_HL - 1;
     return 8;
   };
   LD_DHL_A(op){
-    op.memory[op.register_HL] = op.register_A;
+    op.putMemory(op.register_HL, op.register_A);
     op.register_HL = op.register_HL - 1;
     return 8;
   };
 
   /////////// 16 bits instructions (SHORTS) ///////////
   /* LDH A D16 (Load to Hardware Registers) [Vice-versa] */
-  LDH_A_D16(op, d8, d16){ op.register_A = op.memory[0xFF00 | (d8 | (d16 << 0x8))]; return 12; };
-  LDH_D16_A(op, d8, d16){ op.memory[0xFF00 | (d8 | (d16 << 0x8))] = op.register_A; return 12; };
+  LDH_A_D16(op, d8, d16){ op.register_A = op.readMemory(0xFF00 | (d8 | (d16 << 0x8))); return 12; };
+  LDH_D16_A(op, d8, d16){ op.putMemory(0xFF00 | (d8 | (d16 << 0x8)), op.register_A); return 12; };
 
   /* LDH A (C) (Load to Hardware Registers) [Vice-versa] */
-  LDH_A_C(op){ op.register_A = op.memory[0xFF00 | op.register_C]; return 8; };
-  LDH_C_A(op){ op.memory[0xFF00 | op.register_C] = op.register_A; return 8; };
+  LDH_A_C(op){ op.register_A = op.readMemory(0xFF00 | op.register_C); return 8; };
+  LDH_C_A(op){ op.putMemory(0xFF00 | op.register_C, op.register_A); return 8; };
 
   /* LD short_register short (0 - 8 = d8, 8-16 = d16) */
-  LD_BC_D16(op, d8, d16) { op.register_BC = d8 | (d16 << 0x8); return 12; };
-  LD_DE_D16(op, d8, d16) { op.register_DE = d8 | (d16 << 0x8); return 12; };
-  LD_HL_D16(op, d8, d16) { op.register_HL = d8 | (d16 << 0x8); return 12; };
-  LD_AF_D16(op, d8, d16) { op.register_AF = d8 | (d16 << 0x8); return 12; };
+  LD_BC_D16(op, d8, d16){ op.register_BC = d8 | (d16 << 0x8); return 12; };
+  LD_DE_D16(op, d8, d16){ op.register_DE = d8 | (d16 << 0x8); return 12; };
+  LD_HL_D16(op, d8, d16){ op.register_HL = d8 | (d16 << 0x8); return 12; };
+  LD_AF_D16(op, d8, d16){ op.register_AF = d8 | (d16 << 0x8); return 12; };
 
   /* Load to Stack pointer offset*/
   LD_SP_D16(op, n, m){
@@ -493,8 +510,8 @@ class Z80{
     return 12;
   };
   LD_D16_SP(op, d8, d16){
-    op.memory[d8] = op.SP >> 8;
-    op.memory[d16] = op.SP & 0x8;
+    op.putMemory(d8, op.SP >> 8);
+    op.putMemory(d16, op.SP & 0x8);
     return 12;
   };
 
@@ -504,7 +521,7 @@ class Z80{
   LDHL_SP_R8(op, d8){
     let r8 = complement_two(d8, 8);
     let effective_address = op.SP + r8;
-    op.register_HL = op.memory[effective_address];
+    op.register_HL = op.readMemory(effective_address);
     op.carry_flag = (effective_address & 0x100) === 0x100;
     op.half_carry_flag = (effective_address & 0x10) === 0x10;
     op.zero_flag = false;
@@ -543,8 +560,8 @@ class Z80{
   INC_H(op){ op.register_H = op.register_H + 1; op.INC_R_FLAGS(op.register_H); return 4; };
   INC_L(op){ op.register_L = op.register_L + 1; op.INC_R_FLAGS(op.register_L); return 4; };
   INC_PHL(op){
-    op.memory[op.register_HL] = op.memory[op.register_HL] + 1;
-    INC_R_FLAGS(op.memory[op.register_HL]);
+    op.putMemory(op.register_HL, op.readMemory(op.register_HL) + 1);
+    INC_R_FLAGS(op.readMemory(op.register_HL));
     return 12;
   };
 
@@ -569,8 +586,9 @@ class Z80{
   DEC_H(op){ op.register_H = op.register_H - 1; op.DEC_R_FLAGS(op.register_H); };
   DEC_L(op){ op.register_L = op.register_L - 1; op.DEC_R_FLAGS(op.register_L); };
   DEC_PHL(op){
-    op.memory[op.register_HL] = op.memory[op.register_HL] + 1;
-    DEC_R_FLAGS(op.memory[op.register_HL]);
+    let operation = op.readMemory(op.register_HL) + 1;
+    op.putMemory(op.register_HL, operation);
+    DEC_R_FLAGS(operation);
   };
 
   // Increments Short
@@ -596,7 +614,7 @@ class Z80{
   AND_E(op){ op.AND_R(op.register_E); return 4; };
   AND_H(op){ op.AND_R(op.register_H); return 4; };
   AND_L(op){ op.AND_R(op.register_L); return 8; };
-  AND_PHL(op){ op.AND_R(op.memory[op.register_HL]); return 8; };
+  AND_PHL(op){ op.AND_R(op.readMemory(op.register_HL)); return 8; };
 
   // OR (A <- A | R)  
   OR_R(op, r1){
@@ -614,7 +632,7 @@ class Z80{
   OR_E(op){ op.OR_R(op.register_E); return 4; };
   OR_H(op){ op.OR_R(op.register_H); return 4; };
   OR_L(op){ op.OR_R(op.register_L); return 8; };
-  OR_PHL(op){ op.OR_R(op.memory[op.register_HL]); return 8;  };
+  OR_PHL(op){ op.OR_R(op.readMemory(op.register_HL)); return 8;  };
 
   // XOR (A <- R ^ A)
   XOR_R(r1){
@@ -633,8 +651,8 @@ class Z80{
   XOR_E(op){ op.XOR_R(op.register_E); return 4; };
   XOR_H(op){ op.XOR_R(op.register_H); return 4; };
   XOR_L(op){ op.XOR_R(op.register_L); return 4; };
-  XOR_PHL(op){ op.XOR_R(op.memory[op.register_HL]); return 8; };
-  XOR_D8(op, n){ op.XOR_R(op.memory[n]); return 8; };
+  XOR_PHL(op){ op.XOR_R(op.readMemory(op.register_HL)); return 8; };
+  XOR_D8(op, n){ op.XOR_R(op.readMemory(n)); return 8; };
 
   /* Return Instruction */
   RET(op){
@@ -760,7 +778,7 @@ class Z80{
   RL_E(op, bc){ op.register_E = op.RL_R(op.register_E); return 8; };
   RL_H(op, bc){ op.register_H = op.RL_R(op.register_H); return 8; };
   RL_L(op, bc){ op.register_L = op.RL_R(op.register_L); return 8; };
-  RL_PHL(op, bc){ op.register_PHL = op.RL_R(op.memory[op.register_HL]); return 16; };
+  RL_PHL(op, bc){ op.register_PHL = op.RL_R(op.readMemory(op.register_HL)); return 16; };
   
   // Rotation Right through Carry Flag (hi = a7 a6 a5 a4 a3 a2 a1, lo = a0, cf = a0)
   // https://ez80.readthedocs.io/en/latest/docs/bit-shifts/rr.html
@@ -783,7 +801,7 @@ class Z80{
   RR_E(op, bc){ op.register_E = op.RR_R(op.register_E); return 8; };
   RR_H(op, bc){ op.register_H = op.RR_R(op.register_H); return 8; };
   RR_L(op, bc){ op.register_L = op.RR_R(op.register_L); return 8; };
-  RR_PHL(op, bc){ op.register_PHL = op.RR_R(op.memory[op.register_HL]); return 16; };
+  RR_PHL(op, bc){ op.register_PHL = op.RR_R(op.readMemory(op.register_HL)); return 16; };
 
   
   // Rotation Left through Carry Flag (hi = a7, lo = a6 a5 a4 a3 a2 a1 a0, cf = a7)
@@ -835,7 +853,7 @@ class Z80{
   RLC_E(op, bc){ op.register_E = op.RLC_R(op.register_E); return 8; };
   RLC_H(op, bc){ op.register_H = op.RLC_R(op.register_H); return 8; };
   RLC_L(op, bc){ op.register_L = op.RLC_R(op.register_L); return 8; };
-  RLC_PHL(op, bc){ op.register_PHL = op.RLC_R(op.memory[op.register_HL]); return 16; };
+  RLC_PHL(op, bc){ op.register_PHL = op.RLC_R(op.readMemory(op.register_HL)); return 16; };
 
   // Rotation Right Circular (hi = a7 a6 a5 a4 a3 a2 a1, lo = a0, cf = a0)
   RRC_R(r1){
@@ -856,7 +874,7 @@ class Z80{
   RRC_E(op, bc){ op.register_E = op.RRC_R(op.register_E); return 8; };
   RRC_H(op, bc){ op.register_H = op.RRC_R(op.register_H); return 8; };
   RRC_L(op, bc){ op.register_L = op.RRC_R(op.register_L); return 8; };
-  RRC_PHL(op, bc){ op.register_PHL = op.RRC_R(op.memory[op.register_HL]); return 16; };
+  RRC_PHL(op, bc){ op.register_PHL = op.RRC_R(op.readMemory(op.register_HL)); return 16; };
 
   // Swap halves of register
   SWAP_R(r1){
@@ -893,7 +911,7 @@ class Z80{
   BIT_0_E(op, bc){ op.BIT_K_N(0, op.register_E); return 8; };
   BIT_0_H(op, bc){ op.BIT_K_N(0, op.register_H); return 8; };
   BIT_0_L(op, bc){ op.BIT_K_N(0, op.register_L); return 8; };
-  BIT_0_PHL(op, bc){ op.BIT_K_N(0, op.memory[ op.register_HL]); return 16; };
+  BIT_0_PHL(op, bc){ op.BIT_K_N(0, op.readMemory(op.register_HL)); return 16; };
   
   BIT_1_A(op, bc){ op.BIT_K_N(1, op.register_A); return 8; };
   BIT_1_B(op, bc){ op.BIT_K_N(1, op.register_B); return 8; };
@@ -902,7 +920,7 @@ class Z80{
   BIT_1_E(op, bc){ op.BIT_K_N(1, op.register_E); return 8; };
   BIT_1_H(op, bc){ op.BIT_K_N(1, op.register_H); return 8; };
   BIT_1_L(op, bc){ op.BIT_K_N(1, op.register_L); return 8; };
-  BIT_1_PHL(op, bc){ op.BIT_K_N(1, op.memory[op.register_HL]); return 16; };
+  BIT_1_PHL(op, bc){ op.BIT_K_N(1, op.readMemory(op.register_HL)); return 16; };
 
   BIT_2_A(op, bc)  { op.BIT_K_N(2, op.register_A); return 8; };
   BIT_2_B(op, bc)  { op.BIT_K_N(2, op.register_B); return 8; };
@@ -911,7 +929,7 @@ class Z80{
   BIT_2_E(op, bc)  { op.BIT_K_N(2, op.register_E); return 8; };
   BIT_2_H(op, bc)  { op.BIT_K_N(2, op.register_H); return 8; };
   BIT_2_L(op, bc)  { op.BIT_K_N(2, op.register_L); return 8; };
-  BIT_2_PHL(op, bc){ op.BIT_K_N(2, op.memory[op.register_HL]); return 16; };
+  BIT_2_PHL(op, bc){ op.BIT_K_N(2, op.readMemory(op.register_HL)); return 16; };
 
   BIT_3_A(op, bc)  { op.BIT_K_N(3, op.register_A); return 8; };
   BIT_3_B(op, bc)  { op.BIT_K_N(3, op.register_B); return 8; };
@@ -920,7 +938,7 @@ class Z80{
   BIT_3_E(op, bc)  { op.BIT_K_N(3, op.register_E); return 8; };
   BIT_3_H(op, bc)  { op.BIT_K_N(3, op.register_H); return 8; };
   BIT_3_L(op, bc)  { op.BIT_K_N(3, op.register_L); return 8; };
-  BIT_3_PHL(op, bc){ op.BIT_K_N(3, op.memory[op.register_HL]); return 16; };
+  BIT_3_PHL(op, bc){ op.BIT_K_N(3, op.readMemory(op.register_HL)); return 16; };
 
   BIT_4_A(op, bc)  { op.BIT_K_N(4, op.register_A); return 8; };
   BIT_4_B(op, bc)  { op.BIT_K_N(4, op.register_B); return 8; };
@@ -929,7 +947,7 @@ class Z80{
   BIT_4_E(op, bc)  { op.BIT_K_N(4, op.register_E); return 8; };
   BIT_4_H(op, bc)  { op.BIT_K_N(4, op.register_H); return 8; };
   BIT_4_L(op, bc)  { op.BIT_K_N(4, op.register_L); return 8; };
-  BIT_4_PHL(op, bc){ op.BIT_K_N(4, op.memory[op.register_HL]); return 16; };
+  BIT_4_PHL(op, bc){ op.BIT_K_N(4, op.readMemory(op.register_HL)); return 16; };
 
   BIT_5_A(op, bc)  { op.BIT_K_N(5, op.register_A); return 8; };
   BIT_5_B(op, bc)  { op.BIT_K_N(5, op.register_B); return 8; };
@@ -938,7 +956,7 @@ class Z80{
   BIT_5_E(op, bc)  { op.BIT_K_N(5, op.register_E); return 8; };
   BIT_5_H(op, bc)  { op.BIT_K_N(5, op.register_H); return 8; };
   BIT_5_L(op, bc)  { op.BIT_K_N(5, op.register_L); return 8; };
-  BIT_5_PHL(op, bc){ op.BIT_K_N(5, op.memory[op.register_HL]); return 16; };
+  BIT_5_PHL(op, bc){ op.BIT_K_N(5, op.readMemory(op.register_HL)); return 16; };
 
   BIT_6_A(op, bc)  { op.BIT_K_N(6, op.register_A); return 8; };
   BIT_6_B(op, bc)  { op.BIT_K_N(6, op.register_B); return 8; };
@@ -947,7 +965,7 @@ class Z80{
   BIT_6_E(op, bc)  { op.BIT_K_N(6, op.register_E); return 8; };
   BIT_6_H(op, bc)  { op.BIT_K_N(6, op.register_H); return 8; };
   BIT_6_L(op, bc)  { op.BIT_K_N(6, op.register_L); return 8; };
-  BIT_6_PHL(op, bc){ op.BIT_K_N(6, op.memory[op.register_HL]); return 16; };
+  BIT_6_PHL(op, bc){ op.BIT_K_N(6, op.readMemory(op.register_HL)); return 16; };
 
   BIT_7_A(op, bc)  { op.BIT_K_N(7, op.register_A); return 8; };
   BIT_7_B(op, bc)  { op.BIT_K_N(7, op.register_B); return 8; };
@@ -956,7 +974,7 @@ class Z80{
   BIT_7_E(op, bc)  { op.BIT_K_N(7, op.register_E); return 8; };
   BIT_7_H(op, bc)  { op.BIT_K_N(7, op.register_H); return 8; };
   BIT_7_L(op, bc)  { op.BIT_K_N(7, op.register_L); return 8; };
-  BIT_7_PHL(op, bc){ op.BIT_K_N(7, op.memory[op.register_HL]); return 16; };
+  BIT_7_PHL(op, bc){ op.BIT_K_N(7, op.readMemory(op.register_HL)); return 16; };
 
   // Set bit B in register R
   SET_0_A(){ this.register_A |= (0x1 << 0); return 8; };
