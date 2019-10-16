@@ -232,10 +232,10 @@ class Z80{
     Bit 7 -> Z (Zero Flag)
   */
   /* Set Flags */
-  get carry_flag(){ return ((this.register_F >> 4) & 0x1); };
-  get half_carry_flag(){ return ((this.register_F >> 5) & 0x1); };
-  get negative_flag(){ return ((this.register_F >> 6) & 0x1); };
-  get zero_flag(){ return ((this.register_F >> 7) & 0x1); };
+  get carry_flag()      { return ((this.register_F >> 4) & 0x1); };
+  get half_carry_flag() { return ((this.register_F >> 5) & 0x1); };
+  get subtraction_flag(){ return ((this.register_F >> 6) & 0x1); };
+  get zero_flag()       { return ((this.register_F >> 7) & 0x1); };
 
 
 
@@ -246,7 +246,7 @@ class Z80{
   set half_carry_flag(v){ this.register_F = change_bit_position(this.register_F, 5, v); };
 
   // If the number is negative, then the flag is set.
-  set negative_flag(v){ this.register_F = change_bit_position(this.register_F, 6, v); };
+  set subtraction_flag(v){ this.register_F = change_bit_position(this.register_F, 6, v); };
 
   // Set Zero flag if the operation results in a 0
   set zero_flag(v){ this.register_F = change_bit_position(this.register_F, 7, v); };
@@ -279,7 +279,7 @@ class Z80{
   ADD_A_R(r1){
     let operation = this.register_A + r1;
     this.register_A      = operation & ADDRESS_MASK;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = (operation >> (HALF_ADDRESS - 1)) & 1;
     this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
   };
@@ -299,7 +299,7 @@ class Z80{
   ADC_A_R(r1){
     let operation = this.register_A + r1 + this.carry_flag;
     this.register_A      = operation & ADDRESS_MASK;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = (operation >> (HALF_ADDRESS - 1)) & 1;
     this.carry_flag      = (operation >> (BITS_ADDRESS - 1)) & 1;
   };
@@ -318,14 +318,14 @@ class Z80{
   /* CPL (Complement A Register) */
   CPL(op){
     this.register_A = ~this.register_A & ADDRESS_MASK;
-    this.negative_flag   = true;
+    this.subtraction_flag   = true;
     this.half_carry_flag = true;
   };
 
   /* CP Compare A r (Eq A - r) */
   CP_R(r1){
     this.zero_flag       = this.register_A == r1;
-    this.negative_flag   = true;
+    this.subtraction_flag   = true;
     this.carry_flag      = this.register_A < r1;
     this.half_carry_flag = (((this.register_A & 0x10) - (r1 & 0x10)) & 0x10) === 0x10;
   };
@@ -342,14 +342,14 @@ class Z80{
 
   /* SCF (Set Carry Flag) */
   SCF(op){
-    op.negative_flag = 0;
+    op.subtraction_flag = 0;
     op.half_carry_flag = 0;
     op.carry_flag = 1;
   };
 
   /* CCF (Complement Carry Flag) */
   CCF(op){
-    op.negative_flag = 0;
+    op.subtraction_flag = 0;
     op.half_carry_flag = 0;
     op.carry_flag ^= 1;
   };
@@ -525,7 +525,7 @@ class Z80{
     op.carry_flag = (effective_address & 0x100) === 0x100;
     op.half_carry_flag = (effective_address & 0x10) === 0x10;
     op.zero_flag = false;
-    op.negative_flag = false;
+    op.subtraction_flag = false;
     return 12;
   };
 
@@ -547,7 +547,7 @@ class Z80{
   /* Mathematical Instructions */
   // Increments instruction
   INC_R_FLAGS(value){
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.zero_flag       = (value === 0);
     this.half_carry_flag = (value & 0x10) === 0x10;
   };
@@ -573,7 +573,7 @@ class Z80{
 
   // Decrement instruction
   DEC_R_FLAGS(value){
-    this.negative_flag   = true;
+    this.subtraction_flag   = true;
     this.zero_flag       = (value === 0);
     this.half_carry_flag = (value & 0x10) === 0x10;
   };
@@ -603,7 +603,7 @@ class Z80{
     this.register_A      = r1 & this.register_A;
     this.zero_flag       = this.register_A === 0;
     this.carry_flag      = false;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = true;
   };
 
@@ -621,7 +621,7 @@ class Z80{
     this.register_A      = r1 | this.register_A;
     this.zero_flag       = this.register_A === 0;
     this.carry_flag      = false;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
   };
 
@@ -639,7 +639,7 @@ class Z80{
     this.register_A      = r1 ^ this.register_A;
     this.zero_flag       = this.register_A === 0;
     this.carry_flag      = false;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
   };
 
@@ -765,7 +765,7 @@ class Z80{
     let lo = r1 & ((1 << (BITS_ADDRESS - 1)) - 1);
     let hi = r1 >> (BITS_ADDRESS - 1);
     let rt = this.carry_flag | (lo << 1);
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = hi;
     return rt;
@@ -788,7 +788,7 @@ class Z80{
     let rt = (lo << (BITS_ADDRESS - 1)) | this.carry_flag;
 
     this.zero_flag       = rt === 0;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = lo;
     return rt;
@@ -813,7 +813,7 @@ class Z80{
 
     op.register_A      = rt;
     op.zero_flag       = rt === 0;
-    op.negative_flag   = false;
+    op.subtraction_flag   = false;
     op.half_carry_flag = false;
     op.carry_flag      = lo;
   };
@@ -827,7 +827,7 @@ class Z80{
 
     op.register_A      = rt;
     op.zero_flag       = rt === 0;
-    op.negative_flag   = false;
+    op.subtraction_flag   = false;
     op.half_carry_flag = false;
     op.carry_flag      = lo;
   };
@@ -840,7 +840,7 @@ class Z80{
     let rt = hi | (lo << 1);
     
     this.zero_flag       = rt === 0;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = hi;
     return rt;
@@ -861,7 +861,7 @@ class Z80{
     let hi = r1 >> 1;
     let rt = (lo << (BITS_ADDRESS - 1)) | hi;
     this.zero_flag       = rt === 0;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = lo;
     return rt;
@@ -882,7 +882,7 @@ class Z80{
     let half_2 = r1 >> HALF_ADDRESS;
     let result = (half_1 << (HALF_ADDRESS - 1)) | half_2;
     this.zero_flag       = result === 0;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = false;
     this.carry_flag      = false;
     return result;
@@ -900,7 +900,7 @@ class Z80{
   // Check nth-bit from register A, and set it accumulator bit on/off
   BIT_K_N(k, r1){
     this.zero_flag       = ~(r1 >> k) & 0x1;
-    this.negative_flag   = false;
+    this.subtraction_flag   = false;
     this.half_carry_flag = true;
   };
 
